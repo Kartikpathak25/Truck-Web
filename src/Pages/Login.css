@@ -1,0 +1,163 @@
+/* Container */
+.login-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background: linear-gradient(135deg, #5a5cf0, #7e7efe);
+  font-family: 'Segoe UI', sans-serif;
+  padding: 20px;
+  color: #fff;
+}
+
+/* Header */
+.login-container h1 {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Login Box */
+.login-box {
+  background: rgba(125, 125, 210, 0.95);
+  backdrop-filter: blur(12px);
+  border-radius: 20px;
+  padding: 70px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+  color: #fff;
+  text-align: center;
+  transition: transform 0.3s ease;
+}
+
+.login-box:hover {
+  transform: translateY(-4px);
+}
+
+.login-box h2 {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.login-box p {
+  font-size: 14px;
+  margin-bottom: 24px;
+  color: #e0e0e0;
+}
+
+/* Form Group */
+.form-group {
+  margin-bottom: 18px;
+  text-align: left;
+  position: relative;
+}
+
+.form-group label {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 6px;
+  color: #f0f0f0;
+}
+
+/* Input Fields */
+.form-group input {
+  width: 100%;
+  padding: 15px 0.1px 12px 1.5px;
+  padding-left: 3rem;/* space for icon */
+  border-radius: 10px;
+  border: none;
+  background-color: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 15px;
+  background-repeat: no-repeat;
+  background-position: 16px center;
+  background-size: 20px;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-group input::placeholder {
+  color: #ccc;
+  font-size: 14px;
+}
+
+/* ✅ Email Icon */
+.form-group input#username {
+  background-image: url("data:image/svg+xml,%3Csvg fill='white' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z'/%3E%3C/svg%3E");
+}
+
+/* ✅ Password Icon */
+.form-group input#password {
+  background-image: url("data:image/svg+xml,%3Csvg fill='white' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12 17a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm6-7V7a6 6 0 0 0-12 0v3H4v10h16V10h-2zm-8-3a4 4 0 0 1 8 0v3H10V7z'/%3E%3C/svg%3E");
+}
+
+/* Focus Effects */
+.form-group input:focus {
+  outline: none;
+  background-color: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 0 0 2px #f0ad4e;
+}
+
+/* Dropdown Styling */
+.form-group select {
+  width: 100%;
+  padding: 12px 14px 12px 48px;
+  border-radius: 10px;
+  border: 1px solid #8a6cff;
+  background-color: rgba(40, 40, 60, 0.9);
+  color: #fff;
+  font-size: 15px;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg fill='white' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  padding-right: 30px;
+  transition: border 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-group select:focus {
+  outline: none;
+  border-color: #bbaaff;
+  box-shadow: 0 0 0 2px #8a6cff55;
+}
+
+.form-group select option {
+  background-color: #1f1f2e;
+  color: #fff;
+}
+
+/* Link */
+.form-group a {
+  font-size: 12px;
+  color: #ffd;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.form-group a:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+
+/* Button */
+.login-button {
+  background: linear-gradient(to right, #f0ad4e, #f7c56d);
+  color: #333;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.login-button:hover {
+  background: linear-gradient(to right, #ec971f, #f0ad4e);
+  transform: scale(1.02);
+}
