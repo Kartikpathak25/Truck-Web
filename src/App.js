@@ -1,6 +1,6 @@
 
 import './App.css';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import Login from './Pages/Login.jsx';
 import AdminDashboard from './Dashboard/AdminDashboard/AdminDashboard.jsx';
 import UserManagement from './Pages/Modules/Usermanagement/Usermanagement.jsx';
