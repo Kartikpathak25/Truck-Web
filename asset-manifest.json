@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/Truck-Web/static/css/main.f13db46f.css",
+    "main.js": "/Truck-Web/static/js/main.a64a18ad.js",
+    "static/js/453.95b09ba1.chunk.js": "/Truck-Web/static/js/453.95b09ba1.chunk.js",
+    "index.html": "/Truck-Web/index.html",
+    "main.f13db46f.css.map": "/Truck-Web/static/css/main.f13db46f.css.map",
+    "main.a64a18ad.js.map": "/Truck-Web/static/js/main.a64a18ad.js.map",
+    "453.95b09ba1.chunk.js.map": "/Truck-Web/static/js/453.95b09ba1.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.f13db46f.css",
+    "static/js/main.a64a18ad.js"
+  ]
+}
