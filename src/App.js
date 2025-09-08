@@ -11,18 +11,19 @@ import TankerDashboard from './Dashboard/Tankerdashboard/TankerDashboard.jsx';
 
 function App() {
   return (
-   
-      <Router>
+
+    <Router>
       <Routes>
+        <Route path="/" element={<AdminDashboard />} />
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
         <Route path="/fleet" element={<Fleetmanagement />} />
-        <Route path="/oil" element={<Oilmanagement/>} />
+        <Route path="/oil" element={<Oilmanagement />} />
         <Route path="/city" element={<Cityoperation />} />
         <Route path="/login" element={<Login />} />
-         <Route path="/admin-dashboard" element={<AdminDashboard />} />
-        <Route path="/tanker-dashboard" element={<TankerDashboard/>} />
-        <Route path="/users"  element={<UserManagement/>}/>
-          {/* <Route path='/Truckfill' element={<Truckfill/>}/>          */}
+        <Route path="/admin-dashboard" element={<AdminDashboard />} />
+        <Route path="/tanker-dashboard" element={<TankerDashboard />} />
+        <Route path="/users" element={<UserManagement />} />
+        {/* <Route path='/Truckfill' element={<Truckfill/>}/>          */}
       </Routes>
     </Router>
   );

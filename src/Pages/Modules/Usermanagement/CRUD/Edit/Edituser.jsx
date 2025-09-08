@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { doc, updateDoc } from "firebase/firestore";
+import { db } from "../../../../../firebase";  // sahi path check kar lena
 import './Edituser.css';
 
 export default function EditUserModal({ userData, onClose, onUpdate }) {
   const [formData, setFormData] = useState({
+    id: '',
     name: '',
     email: '',
     LIC: '',
@@ -12,7 +15,7 @@ export default function EditUserModal({ userData, onClose, onUpdate }) {
 
   useEffect(() => {
     if (userData) {
-      setFormData(userData);
+      setFormData(userData); // userData me id bhi pass karna
     }
   }, [userData]);
 
@@ -20,10 +23,25 @@ export default function EditUserModal({ userData, onClose, onUpdate }) {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onUpdate(formData);
-    onClose();
+
+    try {
+      const userRef = doc(db, "users", formData.id); // id required hai
+      await updateDoc(userRef, {
+        name: formData.name,
+        email: formData.email,
+        LIC: formData.LIC,
+        MobNumber: formData.MobNumber,
+        password: formData.password,
+      });
+
+      if (onUpdate) onUpdate(formData);
+      onClose();
+    } catch (error) {
+      console.error("Error updating user:", error);
+      alert("Failed to update user");
+    }
   };
 
   return (

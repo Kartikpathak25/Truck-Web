@@ -1,62 +1,65 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from '../../../Component/Sidebar/Sidebar';
 import './Fleetmanagement.css';
 import AddTruck from '../Fleetmanagement/CRUD/Add/AddTruck';
 import EditTruck from './CRUD/Edit/EditTruck';
 import { FaEdit, FaTrashAlt } from 'react-icons/fa';
+import { db } from '../../../firebase';
+import { collection, onSnapshot, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 
 const Fleetmanagement = () => {
-  const [trucks, setTrucks] = useState([
-    {
-      id: 'TRK-001',
-      model: 'Volvo FH16',
-      location: 'Mumbai Terminal',
-      capacity: '25,000 L',
-      status: 'Active'
-    },
-    {
-      id: 'TRK-002',
-      model: 'Scania R Series',
-      location: 'Delhi Depot',
-      capacity: '30,000 L',
-      status: 'Maintenance'
-    }
-  ]);
-
+  const [trucks, setTrucks] = useState([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [editingTruck, setEditingTruck] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
 
-  const handleAddTruck = (newTruck) => {
-    setTrucks(prev => [...prev, newTruck]);
-    setShowAddForm(false);
+  // Realtime Firestore listener
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, 'trucks'), (snapshot) => {
+      const data = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setTrucks(data);
+    });
+    return () => unsub();
+  }, []);
+
+  // Update Truck
+  const handleUpdateTruck = async (updatedTruck) => {
+    try {
+      const { id, ...fieldsToUpdate } = updatedTruck;
+      const truckRef = doc(db, 'trucks', id);
+      await updateDoc(truckRef, fieldsToUpdate);
+      setShowEditForm(false);
+      setEditingTruck(null);
+    } catch (err) {
+      console.error("Error updating truck:", err);
+    }
   };
 
-  const handleUpdateTruck = (updatedTruck) => {
-    setTrucks(prev =>
-      prev.map(truck =>
-        truck.id === updatedTruck.id ? updatedTruck : truck
-      )
-    );
-    setShowEditForm(false);
-    setEditingTruck(null);
-  };
-
+  // Open Edit Modal
   const handleEdit = (truck) => {
     setEditingTruck(truck);
     setShowEditForm(true);
   };
 
-  const handleDelete = (id) => {
-    setTrucks(prev => prev.filter(truck => truck.id !== id));
+  // Delete Truck
+  const handleDelete = async (id) => {
+    try {
+      await deleteDoc(doc(db, 'trucks', id));
+    } catch (err) {
+      console.error("Error deleting truck:", err);
+    }
   };
 
+  // Filter trucks
   const filteredTrucks = trucks.filter(truck => {
     const matchesSearch =
-      truck.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      truck.model.toLowerCase().includes(searchTerm.toLowerCase());
+      truck.truckNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      truck.model?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus =
       statusFilter === 'All' || truck.status === statusFilter;
     return matchesSearch && matchesStatus;
@@ -75,7 +78,7 @@ const Fleetmanagement = () => {
         <div className="fleet-controls">
           <input
             type="text"
-            placeholder="Search by Truck ID or Model..."
+            placeholder="Search by Truck Number or Model..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
           />
@@ -89,19 +92,18 @@ const Fleetmanagement = () => {
           </select>
         </div>
 
-        {/* ✅ Add Form Modal */}
+        {/* Add Form */}
         {showAddForm && (
           <div className="modal-overlay">
             <div className="modal-content">
               <AddTruck
-                onAdd={handleAddTruck}
                 onClose={() => setShowAddForm(false)}
               />
             </div>
           </div>
         )}
 
-        {/* ✅ Edit Form Modal */}
+        {/* Edit Form */}
         {showEditForm && editingTruck && (
           <div className="modal-overlay">
             <div className="modal-content">
@@ -118,9 +120,9 @@ const Fleetmanagement = () => {
         )}
 
         <div className="fleet-cards">
-          {filteredTrucks.map((truck, index) => (
-            <div key={index} className="fleet-card">
-              <h3>{truck.id} <span className="truck-model">({truck.model})</span></h3>
+          {filteredTrucks.map((truck) => (
+            <div key={truck.id} className="fleet-card">
+              <h3>{truck.truckNumber} <span className="truck-model">({truck.model})</span></h3>
               <p><strong>📍 Location:</strong> {truck.location}</p>
               <p><strong>🛢 Capacity:</strong> {truck.capacity}</p>
               <p><strong>⚙️ Status:</strong> {truck.status}</p>

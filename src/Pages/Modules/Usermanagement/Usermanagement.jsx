@@ -1,18 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AddUserModal from '../Usermanagement/CRUD/Add/Adduser';
 import EditUserModal from '../Usermanagement/CRUD/Edit/Edituser';
 import Sidebar from '../../../Component/Sidebar/Sidebar';
+import { collection, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
+import { db } from '../../../firebase';  // 👈 ensure correct path
 import './Usermanagement.css';
 
 export default function UserManagement() {
   const [showModal, setShowModal] = useState(false);
   const [editUser, setEditUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [users, setUsers] = useState([
-    { name: 'John Admin', email: 'john@admin.com', initials: 'JA', LIC: '123456', MobNumber: '9876543210', password: 'pass123' },
-    { name: 'Mike Wilson', email: 'mike@tanker.com', initials: 'MW', LIC: '654321', MobNumber: '9123456780', password: 'pass456' },
-  ]);
+  const [users, setUsers] = useState([]);
 
+  // 🔹 Fetch users from Firestore in realtime
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, 'users'), (snapshot) => {
+      const data = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      console.log("Realtime Users:", data);
+      setUsers(data);
+    });
+
+    return () => unsub();
+  }, []);
+
+  // 🔹 Add user locally (modal submit)
   const handleAddUser = (newUserData) => {
     const initials = newUserData.name
       .split(' ')
@@ -29,17 +43,34 @@ export default function UserManagement() {
     setShowModal(false);
   };
 
+  // 🔹 Update user locally
   const handleUpdateUser = (updatedUser) => {
     const updatedList = users.map(user =>
-      user.email === updatedUser.email ? { ...updatedUser, initials: user.initials } : user
+      user.id === updatedUser.id ? { ...updatedUser } : user
     );
     setUsers(updatedList);
     setEditUser(null);
   };
 
+  // 🔹 Delete user from Firestore
+  const handleDeleteUser = async (userId) => {
+    const confirmDelete = window.confirm("Are you sure you want to delete this user?");
+    if (!confirmDelete) return;
+
+    try {
+      await deleteDoc(doc(db, "users", userId));
+      setUsers(prev => prev.filter((u) => u.id !== userId));
+      alert("User deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      alert("Failed to delete user");
+    }
+  };
+
+  // 🔹 Search filter
   const filteredUsers = users.filter(user =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
+    user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -70,11 +101,11 @@ export default function UserManagement() {
             </tr>
           </thead>
           <tbody>
-            {filteredUsers.map((user, index) => (
-              <tr key={index}>
+            {filteredUsers.map((user) => (
+              <tr key={user.id}>
                 <td>
                   <div className="user-info">
-                    <div className="avatar">{user.initials}</div>
+                    <div className="avatar">{user.initials || user.name[0]}</div>
                     <div>
                       <strong>{user.name}</strong><br />
                       <span className="email">{user.email}</span>
@@ -85,7 +116,7 @@ export default function UserManagement() {
                 <td>{user.MobNumber}</td>
                 <td>
                   <button className="edit" onClick={() => setEditUser(user)}>✏️ Edit</button>
-                  <button className="delete">🗑️ Delete</button>
+                  <button className="delete" onClick={() => handleDeleteUser(user.id)}>🗑️ Delete</button>
                 </td>
               </tr>
             ))}

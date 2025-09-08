@@ -1,24 +1,43 @@
 import React, { useState } from 'react';
 import './AddTruck.css';
+import { db } from "../../../../../firebase";
+import { collection, addDoc } from 'firebase/firestore';
 
 export default function AddTruck({ onClose }) {
   const [formData, setFormData] = useState({
-    id: '',
+    truckNumber: '',
     model: '',
     location: '',
     capacity: '',
     status: 'Active'
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Truck Added:', formData); // ✅ Console only
-    onClose(); // ✅ Close form after submit
+    if (isSubmitting) return; // double click prevent
+
+    setIsSubmitting(true);
+    try {
+      await addDoc(collection(db, 'trucks'), formData);
+      onClose(); // modal close
+      setFormData({
+        truckNumber: '',
+        model: '',
+        location: '',
+        capacity: '',
+        status: 'Active'
+      });
+    } catch (error) {
+      console.error('Error adding truck:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -27,9 +46,9 @@ export default function AddTruck({ onClose }) {
       <form onSubmit={handleSubmit}>
         <input
           type="text"
-          name="id"
-          placeholder="Truck ID"
-          value={formData.id}
+          name="truckNumber"
+          placeholder="Truck Number"
+          value={formData.truckNumber}
           onChange={handleChange}
           required
         />
@@ -63,8 +82,12 @@ export default function AddTruck({ onClose }) {
         </select>
 
         <div className="form-buttons">
-          <button type="submit" className="submit-btn">Add Truck</button>
-          <button type="button" className="cancel-btn" onClick={onClose}>Cancel</button>
+          <button type="submit" className="submit-btn" disabled={isSubmitting}>
+            {isSubmitting ? 'Adding...' : 'Add Truck'}
+          </button>
+          <button type="button" className="cancel-btn" onClick={onClose} disabled={isSubmitting}>
+            Cancel
+          </button>
         </div>
       </form>
     </div>

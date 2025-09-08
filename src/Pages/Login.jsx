@@ -1,6 +1,8 @@
 // src/Pages/Login/Login.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../firebase';  // make sure firebase.js is in src/
 import './Login.css';
 
 const Login = () => {
@@ -9,14 +11,20 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
+    try {
+      // Firebase Auth login
+      await signInWithEmailAndPassword(auth, username, password);
 
-    // Simulate login logic
-    if (role === 'Tanker') {
-      navigate('/tanker-dashboard');
-    } else if (role === 'Admin') {
-      navigate('/admin-dashboard');
+      // redirect based on role
+      if (role === 'Tanker') {
+        navigate('/tanker-dashboard');
+      } else if (role === 'Admin') {
+        navigate('/admin-dashboard');
+      }
+    } catch (error) {
+      alert('Login failed ❌ ' + error.message);
     }
   };
 
@@ -29,7 +37,11 @@ const Login = () => {
         <form onSubmit={handleLogin}>
           <div className="form-group">
             <label htmlFor="role">Role</label>
-            <select id="role" value={role} onChange={(e) => setRole(e.target.value)}>
+            <select
+              id="role"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+            >
               <option value="Tanker">Tanker</option>
               <option value="Admin">Admin</option>
             </select>

@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from "../../../../../firebase"; // ✅ Correct path
 import './EditTruck.css';
 
-export default function EditTruck({ initialData, onClose }) {
+export default function EditTruck({ initialData, onClose, onUpdate }) {
   const [formData, setFormData] = useState({
-    id: '',
+    truckNumber: '',
     model: '',
     location: '',
     capacity: '',
@@ -12,7 +14,13 @@ export default function EditTruck({ initialData, onClose }) {
 
   useEffect(() => {
     if (initialData) {
-      setFormData(initialData);
+      setFormData({
+        truckNumber: initialData.truckNumber || '', // ✅ UI me dikhega
+        model: initialData.model || '',
+        location: initialData.location || '',
+        capacity: initialData.capacity || '',
+        status: initialData.status || 'Active'
+      });
     }
   }, [initialData]);
 
@@ -21,10 +29,27 @@ export default function EditTruck({ initialData, onClose }) {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Truck Updated:', formData); // ✅ Console only
-    onClose(); // ✅ Close form after update
+    try {
+      const truckRef = doc(db, 'trucks', initialData.id); // ✅ Firestore ID
+
+      await updateDoc(truckRef, {
+        truckNumber: formData.truckNumber, // optional: agar truckNumber update karna hai
+        model: formData.model,
+        location: formData.location,
+        capacity: formData.capacity,
+        status: formData.status
+      });
+
+      console.log('✅ Truck Updated:', { id: initialData.id, ...formData });
+
+      if (onUpdate) onUpdate({ id: initialData.id, ...formData });
+
+      onClose();
+    } catch (error) {
+      console.error('❌ Error updating truck:', error);
+    }
   };
 
   return (
@@ -33,8 +58,7 @@ export default function EditTruck({ initialData, onClose }) {
       <form onSubmit={handleSubmit}>
         <input
           type="text"
-          name="id"
-          value={formData.id}
+          value={formData.truckNumber} // ✅ UI me dikhega
           disabled
         />
         <input
@@ -61,7 +85,11 @@ export default function EditTruck({ initialData, onClose }) {
           onChange={handleChange}
           required
         />
-        <select name="status" value={formData.status} onChange={handleChange}>
+        <select
+          name="status"
+          value={formData.status}
+          onChange={handleChange}
+        >
           <option value="Active">Active</option>
           <option value="Maintenance">Maintenance</option>
         </select>
