@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { collection, addDoc } from "firebase/firestore";
-import { db } from "../../../../../firebase";
+import { collection, doc, setDoc } from "firebase/firestore";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { db, auth } from "../../../../../firebase"; // 👈 ensure correct path
 import "./Adduser.css";
 
 export default function AddUserModal({ onClose }) {
@@ -10,6 +11,7 @@ export default function AddUserModal({ onClose }) {
     LIC: "",
     MobNumber: "",
     password: "",
+    role: "Tanker", // default role
   });
 
   const handleChange = (e) => {
@@ -20,31 +22,42 @@ export default function AddUserModal({ onClose }) {
     e.preventDefault();
 
     try {
-      await addDoc(collection(db, "users"), {
+      // 🔹 1. Create user in Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        formData.email,
+        formData.password
+      );
+      const user = userCredential.user;
+
+      // 🔹 2. Save user details in Firestore with UID
+      await setDoc(doc(db, "users", user.uid), {
         name: formData.name,
         email: formData.email,
         LIC: formData.LIC,
         MobNumber: formData.MobNumber,
-        password: formData.password,
+        role: formData.role,
         initials: formData.name
           .split(" ")
           .map((n) => n[0])
           .join("")
-          .toUpperCase(), // JA type initials
+          .toUpperCase(),
+        createdAt: new Date(),
       });
 
-      alert("✅ User Added Successfully!");
+      alert("✅ User Created Successfully!");
       setFormData({
         name: "",
         email: "",
         LIC: "",
         MobNumber: "",
         password: "",
+        role: "Tanker",
       });
-      onClose(); // modal close karne ke liye
+      onClose();
     } catch (error) {
-      console.error("❌ Error adding user: ", error);
-      alert("Failed to add user. Check console for details.");
+      console.error("❌ Error creating user: ", error);
+      alert("Failed to create user. " + error.message);
     }
   };
 
@@ -93,6 +106,18 @@ export default function AddUserModal({ onClose }) {
             onChange={handleChange}
             required
           />
+
+          {/* 🔹 Role Dropdown */}
+          <select
+            name="role"
+            value={formData.role}
+            onChange={handleChange}
+            required
+          >
+            <option value="Tanker">Tanker</option>
+            <option value="Admin">Admin</option>
+          </select>
+
           <div className="modal-actions">
             <button type="submit">Add User</button>
             <button type="button" onClick={onClose}>

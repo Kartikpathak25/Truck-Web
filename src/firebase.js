@@ -4,15 +4,14 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDlF4escXMQybPcmwDqXfOlD3Bbtqmn0yQ",
-  authDomain: "web-truck.firebaseapp.com",
-  projectId: "web-truck",
-  storageBucket: "web-truck.firebasestorage.app",
-  messagingSenderId: "487504344968",
-  appId: "1:487504344968:web:7a7ea92dd35446f49e2c3d",
-  measurementId: "G-WPXVBMYDWJ"
+  apiKey: "AIzaSyCJ11UL9ECeAMgZNt9h2-dl8JpRg_Qru44",
+  authDomain: "web-truck-d4359.firebaseapp.com",
+  projectId: "web-truck-d4359",
+  storageBucket: "web-truck-d4359.appspot.com",   // ✅ fixed
+  messagingSenderId: "71775287683",
+  appId: "1:71775287683:web:a19685973a3c226f471eb6",
+  measurementId: "G-95PBCVTEC6"
 };
-
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);

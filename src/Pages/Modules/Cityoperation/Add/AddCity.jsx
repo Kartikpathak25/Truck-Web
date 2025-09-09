@@ -1,24 +1,24 @@
-import React, { useState } from 'react';
-import './AddCity.css';
+// src/pages/Modules/Cityoperation/Add/AddCity.js
+import React, { useState } from "react";
+import "./AddCity.css";
 
-export default function AddCity({ onCancel }) {
+export default function AddCity({ onAddCity, onCancel }) {
   const [formData, setFormData] = useState({
-    name: '',
-    manager: '',
-    pump: '',
-    status: 'active',
-    fuelLeft: '',
+    name: "",
+    manager: "",
+    pump: "",
+    status: "active",
+    fuelLeft: "",
   });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log('City Added:', formData); // ✅ Console only
-    onCancel(); // ✅ Close form
+    onAddCity(formData); // ✅ Send data to parent
   };
 
   return (

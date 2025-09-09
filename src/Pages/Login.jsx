@@ -1,12 +1,11 @@
-// src/Pages/Login/Login.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../firebase';  // make sure firebase.js is in src/
+import { auth, db } from '../firebase';
+import { doc, getDoc } from "firebase/firestore";
 import './Login.css';
 
 const Login = () => {
-  const [role, setRole] = useState('Tanker');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
@@ -14,10 +13,21 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      // Firebase Auth login
-      await signInWithEmailAndPassword(auth, username, password);
+      // 🔹 Firebase Auth login
+      const userCredential = await signInWithEmailAndPassword(auth, username, password);
+      const userId = userCredential.user.uid;
 
-      // redirect based on role
+      // 🔹 Firestore se role fetch
+      const userDoc = await getDoc(doc(db, "users", userId));
+      if (!userDoc.exists()) {
+        alert("User not found in database!");
+        return;
+      }
+
+      const userData = userDoc.data();
+      const role = userData.role;
+
+      // 🔹 Redirect based on role
       if (role === 'Tanker') {
         navigate('/tanker-dashboard');
       } else if (role === 'Admin') {
@@ -36,18 +46,7 @@ const Login = () => {
         <p>Sign in to manage the fleet and oil operations</p>
         <form onSubmit={handleLogin}>
           <div className="form-group">
-            <label htmlFor="role">Role</label>
-            <select
-              id="role"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-            >
-              <option value="Tanker">Tanker</option>
-              <option value="Admin">Admin</option>
-            </select>
-          </div>
-          <div className="form-group">
-            <label htmlFor="username">Username</label>
+            <label htmlFor="username">Email</label>
             <input
               type="email"
               id="username"
@@ -64,6 +63,7 @@ const Login = () => {
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              placeholder='Password'
               required
             />
           </div>

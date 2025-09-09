@@ -1,51 +1,56 @@
-import React, { useState } from 'react';
-import Sidebar from '../../../Component/Sidebar/Sidebar';
-import AddCityForm from '../Cityoperation/Add/AddCity';
-import EditCityForm from '../Cityoperation/Edit/EditCity';
-import { FaUserTie, FaGasPump, FaCheckCircle, FaTimesCircle, FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
-import './Cityoperation.css'; // ✅ This is your main CSS for this page
-
-
-
+// src/pages/Modules/Cityoperation/Cityoperation.js
+import React, { useState, useEffect } from "react";
+import Sidebar from "../../../Component/Sidebar/Sidebar";
+import AddCityForm from "../Cityoperation/Add/AddCity";
+import EditCityForm from "../Cityoperation/Edit/EditCity";
+import { FaUserTie, FaGasPump, FaCheckCircle, FaTimesCircle, FaPlus, FaEdit, FaTrash } from "react-icons/fa";
+import { db } from "../../../firebase";
+import {
+  collection,
+  addDoc,
+  onSnapshot,
+  deleteDoc,
+  doc,
+  updateDoc,
+  serverTimestamp,
+} from "firebase/firestore";
+import "./Cityoperation.css";
 
 export default function Cityoperation() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [cities, setCities] = useState([
-    {
-      name: 'Mumbai',
-      manager: 'Rajesh Kumar',
-      pump: 'HP Petrol Pump - Andheri',
-      status: 'active',
-      fuelLeft: '12,500 L',
-    },
-    {
-      name: 'Bangalore',
-      manager: 'Suresh Nair',
-      pump: 'Bharat Petroleum - Koramangala',
-      status: 'active',
-      fuelLeft: '8,200 L',
-    },
-  ]);
-
+  const [searchTerm, setSearchTerm] = useState("");
+  const [cities, setCities] = useState([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingCity, setEditingCity] = useState(null);
 
-  const handleAddCity = (newCity) => {
-    setCities(prev => [...prev, newCity]);
+  // ✅ Fetch cities from Firestore
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, "cities"), (snap) => {
+      setCities(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    });
+    return () => unsub();
+  }, []);
+
+  // ✅ Add new city
+  const handleAddCity = async (newCity) => {
+    await addDoc(collection(db, "cities"), {
+      ...newCity,
+      createdAt: serverTimestamp(),
+    });
     setShowAddForm(false);
   };
 
-  const handleUpdateCity = (updatedCity) => {
-    setCities(prev =>
-      prev.map(city => city.name === updatedCity.name ? updatedCity : city)
-    );
+  // ✅ Update city
+  const handleUpdateCity = async (updatedCity) => {
+    const cityRef = doc(db, "cities", updatedCity.id);
+    await updateDoc(cityRef, updatedCity);
     setEditingCity(null);
   };
 
-  const handleDelete = (name) => {
-    const confirm = window.confirm(`Delete ${name}?`);
-    if (confirm) {
-      setCities(prev => prev.filter(city => city.name !== name));
+  // ✅ Delete city
+  const handleDelete = async (id, name) => {
+    const confirmDelete = window.confirm(`Delete ${name}?`);
+    if (confirmDelete) {
+      await deleteDoc(doc(db, "cities", id));
     }
   };
 
@@ -58,7 +63,7 @@ export default function Cityoperation() {
     setEditingCity(null);
   };
 
-  const filteredCities = cities.filter(city =>
+  const filteredCities = cities.filter((city) =>
     city.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -81,7 +86,11 @@ export default function Cityoperation() {
 
         {editingCity && (
           <div className="form-wrapper">
-            <EditCityForm cityData={editingCity} onUpdateCity={handleUpdateCity} onCancel={handleCancel} />
+            <EditCityForm
+              cityData={editingCity}
+              onUpdateCity={handleUpdateCity}
+              onCancel={handleCancel}
+            />
           </div>
         )}
 
@@ -96,12 +105,12 @@ export default function Cityoperation() {
 
         <div className="city-cards">
           {filteredCities.map((city) => (
-            <div className="city-card" key={city.name}>
+            <div className="city-card" key={city.id}>
               <h2>{city.name}</h2>
               <p><FaUserTie /> Manager: {city.manager}</p>
               <p><FaGasPump /> Pump: {city.pump}</p>
               <p className={`status ${city.status}`}>
-                {city.status === 'active' ? <FaCheckCircle /> : <FaTimesCircle />}
+                {city.status === "active" ? <FaCheckCircle /> : <FaTimesCircle />}
                 {city.status.charAt(0).toUpperCase() + city.status.slice(1)}
               </p>
               <div className="fuel-info">
@@ -109,8 +118,15 @@ export default function Cityoperation() {
                 <h3>{city.fuelLeft}</h3>
               </div>
               <div className="card-actions">
-                <button className="edit-btn" onClick={() => handleEditClick(city)}><FaEdit /> Edit</button>
-                <button className="delete-btn" onClick={() => handleDelete(city.name)}><FaTrash /> Delete</button>
+                <button className="edit-btn" onClick={() => handleEditClick(city)}>
+                  <FaEdit /> Edit
+                </button>
+                <button
+                  className="delete-btn"
+                  onClick={() => handleDelete(city.id, city.name)}
+                >
+                  <FaTrash /> Delete
+                </button>
               </div>
             </div>
           ))}

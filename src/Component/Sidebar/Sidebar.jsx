@@ -1,54 +1,56 @@
 import React from 'react';
+import { Link } from 'react-router-dom';   // <-- use Link instead of <a>
 import {
   FaTachometerAlt,     // Dashboard
   FaTruck,             // Fleet Management
   FaOilCan,            // Oil Management
   FaUsers,             // User Management
-  FaCity,              // City Operation (custom substitute)
+  FaCity,              // City Operation
   FaSignOutAlt         // Logout
 } from 'react-icons/fa';
 
 import styles from './Sidebar.css'; 
+
 const Sidebar = () => {
   return (
     <div className="sidebar">
       <h2 className={styles.title}>Admin Panel</h2>
       <ul className={styles.navList}>
         <li>
-          <a href="/admin-dashboard" className={styles.navItem}>
+          <Link to="/admin-dashboard" className={styles.navItem}>
             <FaTachometerAlt className={styles.icon} />
-             Dashboard 
-          </a>
+            Dashboard 
+          </Link>
         </li>
         <li>
-          <a href="/fleet" className={styles.navItem}>
+          <Link to="/fleet" className={styles.navItem}>
             <FaTruck className={styles.icon} />
             Fleet Management
-          </a>
+          </Link>
         </li>
         <li>
-          <a href="/oil" className={styles.navItem}>
+          <Link to="/oil" className={styles.navItem}>
             <FaOilCan className={styles.icon} />
             Oil Management
-          </a>
+          </Link>
         </li>
         <li>
-          <a href="/users" className={styles.navItem}>
+          <Link to="/users" className={styles.navItem}>
             <FaUsers className={styles.icon} />
             User Management
-          </a>
+          </Link>
         </li>
         <li>
-          <a href="/city" className={styles.navItem}>
+          <Link to="/city" className={styles.navItem}>
             <FaCity className={styles.icon} />
             City Operation
-          </a>
+          </Link>
         </li>
         <li>
-          <a href="/login" className={styles.navItem}>
+          <Link to="/" className={styles.navItem}>
             <FaSignOutAlt className={styles.icon} />
             Logout
-          </a>
+          </Link>
         </li>
       </ul>
     </div>

@@ -1,3 +1,4 @@
+// src/Pages/Modules/Usermanagement/CRUD/Edit/Edituser.jsx
 import React, { useState, useEffect } from 'react';
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../../../../../firebase";  // sahi path check kar lena
@@ -11,11 +12,12 @@ export default function EditUserModal({ userData, onClose, onUpdate }) {
     LIC: '',
     MobNumber: '',
     password: '',
+    role: 'Tanker',  // default role
   });
 
   useEffect(() => {
     if (userData) {
-      setFormData(userData); // userData me id bhi pass karna
+      setFormData(userData); // userData me id aur role pass karna
     }
   }, [userData]);
 
@@ -27,13 +29,14 @@ export default function EditUserModal({ userData, onClose, onUpdate }) {
     e.preventDefault();
 
     try {
-      const userRef = doc(db, "users", formData.id); // id required hai
+      const userRef = doc(db, "users", formData.id); // id required
       await updateDoc(userRef, {
         name: formData.name,
         email: formData.email,
         LIC: formData.LIC,
         MobNumber: formData.MobNumber,
         password: formData.password,
+        role: formData.role,
       });
 
       if (onUpdate) onUpdate(formData);
@@ -89,6 +92,10 @@ export default function EditUserModal({ userData, onClose, onUpdate }) {
             onChange={handleChange}
             required
           />
+          <select name="role" value={formData.role} onChange={handleChange}>
+            <option value="Tanker">Tanker</option>
+            <option value="Admin">Admin</option>
+          </select>
           <div className="modal-actions">
             <button type="submit">Update</button>
             <button type="button" onClick={onClose}>Cancel</button>
