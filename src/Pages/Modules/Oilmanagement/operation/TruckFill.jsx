@@ -56,7 +56,7 @@ export default function TruckFill({ onClose, showRecordsOnly = false }) {
       {/* Render Form only if NOT showRecordsOnly */}
       {!showRecordsOnly && (
         <>
-          <h3>🛢️ Truck Fill Tanker</h3>
+          <h3>🛢️ Fill Tanker From - Petrol Pump To Tanker</h3>
           <form onSubmit={handleSubmit} className="truck-form">
             <input type="text" name="tankerId" placeholder="Tanker ID" value={form.tankerId} onChange={handleChange} required />
             <input type="text" name="product" placeholder="Product" value={form.product} onChange={handleChange} required />
