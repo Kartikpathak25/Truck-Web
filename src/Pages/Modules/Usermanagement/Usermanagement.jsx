@@ -28,7 +28,8 @@ export default function UserManagement() {
 
   // 🔹 Add user locally (modal submit)
   const handleAddUser = (newUserData) => {
-    const initials = newUserData.name
+    const name = newUserData.name || "Unnamed User";
+    const initials = name
       .split(' ')
       .map(word => word[0])
       .join('')
@@ -36,6 +37,7 @@ export default function UserManagement() {
 
     const newUser = {
       ...newUserData,
+      name,
       initials,
     };
 
@@ -105,15 +107,17 @@ export default function UserManagement() {
               <tr key={user.id}>
                 <td>
                   <div className="user-info">
-                    <div className="avatar">{user.initials || user.name[0]}</div>
+                    <div className="avatar">
+                      {user.initials || user.name?.[0] || "?"}
+                    </div>
                     <div>
-                      <strong>{user.name}</strong><br />
-                      <span className="email">{user.email}</span>
+                      <strong>{user.name || "Unnamed User"}</strong><br />
+                      <span className="email">{user.email || "No Email"}</span>
                     </div>
                   </div>
                 </td>
-                <td>{user.LIC}</td>
-                <td>{user.MobNumber}</td>
+                <td>{user.LIC || "N/A"}</td>
+                <td>{user.MobNumber || "N/A"}</td>
                 <td>
                   <button className="edit" onClick={() => setEditUser(user)}>✏️ Edit</button>
                   <button className="delete" onClick={() => handleDeleteUser(user.id)}>🗑️ Delete</button>
