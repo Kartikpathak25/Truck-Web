@@ -1,9 +1,9 @@
-/* src/Component/Layouts/SideBar/Sidebar.css */
+/* 🔹 Desktop Sidebar */
 .sidebar {
   width: 250px;
-  background-color: blue;
+  background-color: #002366;
   color: white;
-  padding: 25px;
+  padding: 20px;
   height: 100vh;
 }
 
@@ -24,40 +24,93 @@
 .sidebar a {
   color: white;
   text-decoration: none;
-  padding: 15px;
-  display: -webkit-box;
-  border-radius: 15px;
-}
-
-.sidebar a:hover {
-  background-color: #dcea1d;
-}
-
-.sidebar {
-  width: 250px;
-  background-color: #002366;
-  color: white;
-  padding: 20px;
-}
-
-.logo {
+  padding: 12px;
   display: flex;
   align-items: center;
   gap: 10px;
+  border-radius: 8px;
 }
 
-nav ul {
-  list-style: none;
-  padding: 0;
-  margin-top: 20px;
+.sidebar a:hover {
+  background-color: #1e3a8a;
 }
 
-nav li {
-  padding: 10px 0;
+/* 🔹 Mobile Navbar */
+.mobile-navbar {
+  display: none;
+  background: #002366;
+  color: white;
+  padding: 12px 20px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.menu-toggle {
+  font-size: 22px;
+  background: none;
+  border: none;
+  color: white;
   cursor: pointer;
 }
 
-nav li.active {
-  font-weight: bold;
-  color: #ffd700;
+.mobile-title {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* 🔹 Mobile Dropdown Menu */
+.mobile-menu {
+  display: none;
+  background: #002366;
+  color: white;
+  position: absolute;
+  top: 56px;
+  left: 0;
+  width: 100%;
+  z-index: 99;
+  animation: slideDown 0.3s ease-in-out;
+}
+
+.mobile-menu ul {
+  list-style: none;
+  margin: 0;
+  padding: 10px 0;
+}
+
+.mobile-menu li {
+  border-bottom: 1px solid rgba(255,255,255,0.2);
+}
+
+.mobile-menu a {
+  color: white;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.mobile-menu a:hover {
+  background: #1e3a8a;
+}
+
+/* Animation */
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* 🔹 Responsive Breakpoints */
+@media (max-width: 768px) {
+  .sidebar {
+    display: none;   /* Hide sidebar in mobile */
+  }
+
+  .mobile-navbar {
+    display: flex;   /* Show top navbar */
+  }
+
+  .mobile-menu {
+    display: block;  /* Show dropdown when open */
+  }
 }

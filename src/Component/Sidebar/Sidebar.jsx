@@ -1,59 +1,58 @@
-import React from 'react';
-import { Link } from 'react-router-dom';   // <-- use Link instead of <a>
+// src/Component/Sidebar/Sidebar.jsx
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import {
-  FaTachometerAlt,     // Dashboard
-  FaTruck,             // Fleet Management
-  FaOilCan,            // Oil Management
-  FaUsers,             // User Management
-  FaCity,              // City Operation
-  FaSignOutAlt         // Logout
-} from 'react-icons/fa';
-
-import styles from './Sidebar.css'; 
+  FaTachometerAlt,
+  FaTruck,
+  FaOilCan,
+  FaUsers,
+  FaCity,
+  FaSignOutAlt,
+  FaBars,
+  FaTimes
+} from "react-icons/fa";
+import "./Sidebar.css";
 
 const Sidebar = () => {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
-    <div className="sidebar">
-      <h2 className={styles.title}>Admin Panel</h2>
-      <ul className={styles.navList}>
-        <li>
-          <Link to="/admin-dashboard" className={styles.navItem}>
-            <FaTachometerAlt className={styles.icon} />
-            Dashboard 
-          </Link>
-        </li>
-        <li>
-          <Link to="/fleet" className={styles.navItem}>
-            <FaTruck className={styles.icon} />
-            Fleet Management
-          </Link>
-        </li>
-        <li>
-          <Link to="/oil" className={styles.navItem}>
-            <FaOilCan className={styles.icon} />
-            Oil Management
-          </Link>
-        </li>
-        <li>
-          <Link to="/users" className={styles.navItem}>
-            <FaUsers className={styles.icon} />
-            User Management
-          </Link>
-        </li>
-        <li>
-          <Link to="/city" className={styles.navItem}>
-            <FaCity className={styles.icon} />
-            City Operation
-          </Link>
-        </li>
-        <li>
-          <Link to="/" className={styles.navItem}>
-            <FaSignOutAlt className={styles.icon} />
-            Logout
-          </Link>
-        </li>
-      </ul>
-    </div>
+    <>
+      {/* 🔹 Mobile Navbar */}
+      <div className="mobile-navbar">
+        <button className="menu-toggle" onClick={() => setIsOpen(!isOpen)}>
+          {isOpen ? <FaTimes /> : <FaBars />}
+        </button>
+        <h2 className="mobile-title">Admin Panel</h2>
+      </div>
+
+      {/* 🔹 Desktop Sidebar */}
+      <div className="sidebar">
+        <h2>Admin Panel</h2>
+        <ul>
+          <li><Link to="/admin-dashboard"><FaTachometerAlt /> Dashboard</Link></li>
+          <li><Link to="/fleet"><FaTruck /> Fleet Management</Link></li>
+          <li><Link to="/oil"><FaOilCan /> Oil Management</Link></li>
+          <li><Link to="/users"><FaUsers /> User Management</Link></li>
+          <li><Link to="/city"><FaCity /> City Operation</Link></li>
+          <li><Link to="/"><FaSignOutAlt /> Logout</Link></li>
+        </ul>
+      </div>
+
+      {/* 🔹 Mobile Dropdown Menu */}
+      {isOpen && (
+        <div className="mobile-menu">
+          <ul>
+            <li><Link to="/admin-dashboard" onClick={() => setIsOpen(false)}><FaTachometerAlt /> Dashboard</Link></li>
+            <li><Link to="/fleet" onClick={() => setIsOpen(false)}><FaTruck /> Fleet Management</Link></li>
+            <li><Link to="/oil" onClick={() => setIsOpen(false)}><FaOilCan /> Oil Management</Link></li>
+            <li><Link to="/users" onClick={() => setIsOpen(false)}><FaUsers /> User Management</Link></li>
+            <li><Link to="/city" onClick={() => setIsOpen(false)}><FaCity /> City Operation</Link></li>
+            <li><Link to="/" onClick={() => setIsOpen(false)}><FaSignOutAlt /> Logout</Link></li>
+          </ul>
+        </div>
+      )}
+    </>
   );
 };
 
