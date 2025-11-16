@@ -4,13 +4,13 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCJ11UL9ECeAMgZNt9h2-dl8JpRg_Qru44",
-  authDomain: "web-truck-d4359.firebaseapp.com",
-  projectId: "web-truck-d4359",
-  storageBucket: "web-truck-d4359.appspot.com",   // ✅ fixed
-  messagingSenderId: "71775287683",
-  appId: "1:71775287683:web:a19685973a3c226f471eb6",
-  measurementId: "G-95PBCVTEC6"
+  apiKey: "AIzaSyBiyLpsC5ajcQGopAu-naA99ExF6tUsUr0",
+  authDomain: "truck-web-4eab7.firebaseapp.com",
+  projectId: "truck-web-4eab7",
+  storageBucket: "truck-web-4eab7.firebasestorage.app",   // ✅ fixed
+  messagingSenderId: "845848195246",
+  appId: "1:845848195246:web:65032b90400e76d7eafd3f",
+  measurementId: "G-1H9VXKMTLW"
 };
 
 // Initialize Firebase
