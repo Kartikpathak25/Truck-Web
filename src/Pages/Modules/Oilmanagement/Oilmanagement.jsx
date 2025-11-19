@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import Sidebar from "../../../Component/Sidebar/Sidebar";
-import TankerFill from "./operation/TankerFill";
-import TruckFill from "./operation/TruckFill";
+import TankerFill from "../../../Pages/Modules/Oilmanagement/operation/TankerFill/TankerFill";
+import TruckFill from "../../../Pages/Modules/Oilmanagement/operation/TruckFill/TruckFill";
 import "./Oilmanagement.css";
+
 
 export default function Oilmanagement() {
   const [activeForm, setActiveForm] = useState(null);
@@ -31,9 +32,10 @@ export default function Oilmanagement() {
               {activeForm === "tanker" && (
                 <TankerFill onClose={() => setActiveForm(null)} />
               )}
-              {activeForm === "truck" && (
-                <TruckFill onClose={() => setActiveForm(null)} />
-              )}
+             {activeForm === "truck" && (
+  <TruckFill onClose={() => setActiveForm(null)} />
+)}
+
             </div>
           </div>
         )}

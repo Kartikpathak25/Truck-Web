@@ -7,6 +7,7 @@ import Fleetmanagement from './Pages/Modules/Fleetmanagement/Fleetmanagemenet.js
 import Oilmanagement from './Pages/Modules/Oilmanagement/Oilmanagement.jsx';
 import Cityoperation from './Pages/Modules/Cityoperation/Cityoperation.jsx';
 import TankerDashboard from './Dashboard/Tankerdashboard/TankerDashboard.jsx';
+import Maintanance from './Pages/Modules/Maintananace/Maintanance.jsx';
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
         <Route path="/city" element={<Cityoperation />} />
         <Route path="/tanker-dashboard" element={<TankerDashboard />} />
         <Route path="/users" element={<UserManagement />} />
+        <Route path='/maintenance' element={<Maintanance />}/>
 
         {/* Agar galat route likhe to Login par redirect */}
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -1,0 +1,176 @@
+/* --------------------- Container --------------------- */
+.tanker-fill {
+  background: #f9f9f9;
+  padding: 16px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  margin-bottom: 20px;
+  max-height: 80vh;
+  overflow-y: auto;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.tanker-fill h3 {
+  margin-bottom: 12px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #2c3e50;
+  text-align: center;
+}
+
+/* --------------------- Form Layout --------------------- */
+.tanker-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 20px;
+  align-items: start;
+}
+
+.tanker-form label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #34495e;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.tanker-form input,
+.tanker-form select {
+  width: 100%;
+  padding: 7px 10px;
+  font-size: 13px;
+  border: 1px solid #d0d0d0;
+  border-radius: 6px;
+  background-color: #fff;
+  transition: border-color 0.2s ease;
+}
+
+.tanker-form input:focus,
+.tanker-form select:focus {
+  border-color: #3498db;
+  outline: none;
+}
+
+/* --------------------- Actions --------------------- */
+.form-actions {
+  grid-column: span 2;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.form-actions button {
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.form-actions button[type="submit"] {
+  background-color: #27ae60;
+  color: #fff;
+}
+
+.form-actions button[type="submit"]:hover {
+  background-color: #219150;
+}
+
+.form-actions button[type="button"] {
+  background-color: #e74c3c;
+  color: #fff;
+}
+
+.form-actions button[type="button"]:hover {
+  background-color: #c0392b;
+}
+
+/* --------------------- Table Styling --------------------- */
+.tanker-table {
+  margin-top: 20px;
+  overflow-x: auto;
+}
+
+.tanker-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 700px;
+}
+
+.tanker-table th,
+.tanker-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #e0e0e0;
+  text-align: center;
+}
+
+.tanker-table th {
+  background-color: #ecf0f1;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.tanker-table tr:hover {
+  background-color: #f4f6f7;
+}
+
+.tanker-table button {
+  padding: 5px 10px;
+  font-size: 12px;
+  border: none;
+  border-radius: 4px;
+  background-color: #3498db;
+  color: #fff;
+  cursor: pointer;
+}
+
+.tanker-table button:hover {
+  background-color: #2980b9;
+}
+
+/* --------------------- Mobile View --------------------- */
+@media (max-width: 768px) {
+  .tanker-form {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .form-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .form-actions button {
+    width: 100%;
+  }
+
+  .tanker-table table {
+    font-size: 12px;
+    min-width: 480px;
+  }
+}.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.print-btn {
+  padding: 6px 12px;
+  font-size: 13px;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.print-btn:hover {
+  background-color: #2980b9;
+}
+

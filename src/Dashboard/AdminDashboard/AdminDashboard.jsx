@@ -91,7 +91,7 @@ const AdminDashboard = () => {
 
           <div className="card pending">
             <div className="card-icon"><FaClipboardList /></div>
-            <h3>Pending Deliveries</h3>
+            <h3>Mantainance Truck </h3>
             <p>{pendingDeliveries}</p>
           </div>
         </div>

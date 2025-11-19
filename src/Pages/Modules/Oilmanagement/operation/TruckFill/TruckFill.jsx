@@ -1,6 +1,8 @@
 // src/pages/Dashboard/Oilmanagement/operation/TruckFill.js
 import React, { useState, useEffect } from "react";
-import { db } from "../../../../firebase";
+// TankerFill.jsx / TruckFill.jsx
+import { db } from "../../../../../firebase";
+
 import { collection, addDoc, onSnapshot, serverTimestamp, deleteDoc, doc } from "firebase/firestore";
 import "./TruckFill.css";
 

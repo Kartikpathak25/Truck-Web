@@ -9,7 +9,8 @@ import {
   FaCity,
   FaSignOutAlt,
   FaBars,
-  FaTimes
+  FaTimes,
+  FaTools // 🔧 Icon for Maintenance
 } from "react-icons/fa";
 import "./Sidebar.css";
 
@@ -35,6 +36,7 @@ const Sidebar = () => {
           <li><Link to="/oil"><FaOilCan /> Oil Management</Link></li>
           <li><Link to="/users"><FaUsers /> User Management</Link></li>
           <li><Link to="/city"><FaCity /> City Operation</Link></li>
+          <li><Link to="/maintenance"><FaTools /> Maintenance</Link></li> {/* ✅ Added */}
           <li><Link to="/"><FaSignOutAlt /> Logout</Link></li>
         </ul>
       </div>
@@ -48,6 +50,7 @@ const Sidebar = () => {
             <li><Link to="/oil" onClick={() => setIsOpen(false)}><FaOilCan /> Oil Management</Link></li>
             <li><Link to="/users" onClick={() => setIsOpen(false)}><FaUsers /> User Management</Link></li>
             <li><Link to="/city" onClick={() => setIsOpen(false)}><FaCity /> City Operation</Link></li>
+            <li><Link to="/maintenance" onClick={() => setIsOpen(false)}><FaTools /> Maintenance</Link></li> {/* ✅ Added */}
             <li><Link to="/" onClick={() => setIsOpen(false)}><FaSignOutAlt /> Logout</Link></li>
           </ul>
         </div>
