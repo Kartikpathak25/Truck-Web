@@ -1,8 +1,8 @@
 // src/components/Maintanance/Maintanance.js
 import React, { useState, useEffect } from "react";
-import "./maintananace.css";
+import "./Maintanance2.css";
 import { useForm } from "react-hook-form";
-import Sidebar from "../../../Component/Sidebar/Sidebar";
+import Sidebar from "../../../Component/Sidebar/Sidebar2/Sidebar2";
 import {
   FaUser,
   FaCalendarAlt,
@@ -30,7 +30,7 @@ import {
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-export default function Maintanance() {
+export default function Maintanance2() {
   const [maintenanceList, setMaintenanceList] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editIndex, setEditIndex] = useState(null);
@@ -40,9 +40,6 @@ export default function Maintanance() {
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [deleteIndex, setDeleteIndex] = useState(null);
 
-  // Truck options
-  const [truckOptions, setTruckOptions] = useState([]);
-
   const {
     register,
     handleSubmit,
@@ -51,7 +48,7 @@ export default function Maintanance() {
     formState: { errors },
   } = useForm();
 
-  // 🔥 FETCH MAINTENANCE DATA
+  // 🔥 FETCH DATA
   useEffect(() => {
     const fetchMaintenance = async () => {
       const snapshot = await getDocs(collection(db, "maintenance"));
@@ -59,15 +56,6 @@ export default function Maintanance() {
       setMaintenanceList(list);
     };
     fetchMaintenance();
-  }, []);
-
-  // 🔥 FETCH TRUCKS DATA
-  useEffect(() => {
-    const fetchTrucks = async () => {
-      const snapshot = await getDocs(collection(db, "trucks"));
-      setTruckOptions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    };
-    fetchTrucks();
   }, []);
 
   // 🔥 ADD / UPDATE
@@ -162,15 +150,6 @@ export default function Maintanance() {
     doc.save(`maintenance-${item.truckId || "record"}.pdf`);
   };
 
-  // ✅ Auto-fill driverName when truck selected
-  const handleTruckSelect = (truckNumber) => {
-    setValue("truckId", truckNumber);
-    const selectedTruck = truckOptions.find(t => t.truckNumber === truckNumber);
-    if (selectedTruck) {
-      setValue("driverName", selectedTruck.driverName || "");
-    }
-  };
-
   return (
     <div className="maintenance-layout">
       <Sidebar />
@@ -198,23 +177,17 @@ export default function Maintanance() {
               <h3>{editIndex !== null ? "Edit Maintenance" : "Add Maintenance"}</h3>
 
               <form onSubmit={handleSubmit(onSubmit)}>
-                <label>Truck ID:</label>
-                <select
-                  {...register("truckId", { required: "Truck ID required" })}
-                  onChange={(e) => handleTruckSelect(e.target.value)}
-                >
-                  <option value="">Select Truck</option>
-                  {truckOptions.map((truck, index) => (
-                    <option key={index} value={truck.truckNumber}>{truck.truckNumber}</option>
-                  ))}
-                </select>
-                {errors.truckId && <p className="error">{errors.truckId.message}</p>}
-
-                <label>Driver Name:</label>
                 <input
                   type="text"
+                  placeholder="Truck ID"
+                  {...register("truckId", { required: "Truck ID required" })}
+                />
+                {errors.truckId && <p className="error">{errors.truckId.message}</p>}
+
+                <input
+                  type="text"
+                  placeholder="Driver Name"
                   {...register("driverName", { required: "Driver required" })}
-                  readOnly
                 />
                 {errors.driverName && (
                   <p className="error">{errors.driverName.message}</p>
@@ -265,7 +238,6 @@ export default function Maintanance() {
         )}
 
         {/* DELETE POPUP */}
-                {/* DELETE POPUP */}
         {showDeletePopup && (
           <div className="popup-overlay">
             <div className="popup-box">
@@ -288,35 +260,62 @@ export default function Maintanance() {
         <div className="maintenance-list">
           {filteredList.map((item, index) => (
             <div key={item.id} className="maintenance-card">
+              {/* Replaced image with gradient icon */}
               <div className="card-icon">
                 <FaWrench />
               </div>
 
               <div className="card-content">
                 <h3>{item.truckId}</h3>
-                <p><FaUser /> <strong>Driver:</strong> {item.driverName}</p>
-                <p><FaCalendarAlt /> <strong>Date:</strong> {item.date}</p>
-                <p><FaTools /> <strong>Parts:</strong> {item.partName}</p>
-                <p><FaRupeeSign /> <strong>Price:</strong> ₹{item.price}</p>
-                <p><FaSortAmountUp /> <strong>Qty:</strong> {item.quantity}</p>
-                <p><FaRupeeSign /> <strong>Service:</strong> ₹{item.serviceCharge}</p>
-                <p><FaClipboardList /> <strong>Notes:</strong> {item.notes}</p>
 
+                <p>
+                  <FaUser /> <strong>Driver:</strong> {item.driverName}
+                </p>
+                <p>
+                  <FaCalendarAlt /> <strong>Date:</strong> {item.date}
+                </p>
+                <p>
+                  <FaTools /> <strong>Parts:</strong> {item.partName}
+                </p>
+                <p>
+                  <FaRupeeSign /> <strong>Price:</strong> ₹{item.price}
+                </p>
+                <p>
+                  <FaSortAmountUp /> <strong>Qty:</strong> {item.quantity}
+                </p>
+                <p>
+                  <FaRupeeSign /> <strong>Service:</strong> ₹{item.serviceCharge}
+                </p>
+                <p>
+                  <FaClipboardList /> <strong>Notes:</strong> {item.notes}
+                </p>
+
+                {/* BUTTON ROW */}
                 <div className="card-actions">
-                  <button className="edit-btn" onClick={() => handleEdit(index)}>Edit</button>
-                  <button className="delete-btn" onClick={() => handleDeleteClick(index)}>
+                  <button className="edit-btn" onClick={() => handleEdit(index)}>
+                    Edit
+                  </button>
+
+                  <button
+                    className="delete-btn"
+                    onClick={() => handleDeleteClick(index)}
+                  >
                     <FaTrash /> Delete
                   </button>
-                  <button className="print-btn" onClick={() => handlePrintCard(item)} title="Export PDF">
+
+                  <button
+                    className="print-btn"
+                    onClick={() => handlePrintCard(item)}
+                    title="Export PDF"
+                  >
                     <FaPrint /> Print
                   </button>
                 </div>
               </div>
             </div>
           ))}
-               </div>   {/* closes maintenance-content */}
-      </div>   {/* closes maintenance-layout */}
+        </div>
+      </div>
     </div>
   );
 }
-

@@ -8,10 +8,13 @@ import {
   serverTimestamp,
   deleteDoc,
   doc,
+  query,
+  where,
+  orderBy,
+  limit
 } from "firebase/firestore";
 import jsPDF from "jspdf";
-
-import autoTable from "jspdf-autotable";  // 👈 import the plugin
+import autoTable from "jspdf-autotable";
 import "./TankerFill.css";
 import EditTanker from "./EditTanker";
 
@@ -27,11 +30,16 @@ export default function TankerFill({ onClose, showRecordsOnly = false }) {
   const [records, setRecords] = useState([]);
   const [editRecord, setEditRecord] = useState(null);
 
-  // Fetch Truck Numbers
+  // ✅ Fetch Truck Data (truckNumber + location + driverName)
   useEffect(() => {
     const fetchTrucks = async () => {
       const snapshot = await getDocs(collection(db, "trucks"));
-      setTankerOptions(snapshot.docs.map(doc => doc.data().truckNumber));
+      setTankerOptions(
+        snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }))
+      );
     };
     fetchTrucks();
   }, []);
@@ -56,7 +64,7 @@ export default function TankerFill({ onClose, showRecordsOnly = false }) {
 
   const handleSubmit = async e => {
     e.preventDefault();
-    if (!tankerId || !quantity || !source || !dateTime || !oldReading || !currentReading || !driverName) return;
+    if (!tankerId || !quantity || !source || !dateTime || !currentReading || !driverName) return;
 
     await addDoc(collection(db, "tankerFillOperations"), {
       tankerId,
@@ -75,50 +83,59 @@ export default function TankerFill({ onClose, showRecordsOnly = false }) {
 
   const handleCancel = () => {
     resetForm();
-    if (onClose) onClose(); // 👈 go back to dashboard
+    if (onClose) onClose();
   };
 
   const handleDelete = async id => await deleteDoc(doc(db, "tankerFillOperations", id));
 
   const handleEdit = item => setEditRecord(item);
 
- const handlePrint = () => {
-  const doc = new jsPDF("p", "mm", "a4"); // portrait, millimeters, A4 size
-  // const pageWidth = doc.internal.pageSize.getWidth();
+  const handlePrint = () => {
+    const doc = new jsPDF("p", "mm", "a4");
+    autoTable(doc, {
+      startY: 30,
+      head: [["Truck Number", "Quantity", "Location", "Date & Time", "Old Reading", "Current Reading", "Driver Name"]],
+      body: records.map(r => [
+        r.tankerId || "",
+        r.quantity || "",
+        r.source || "",
+        r.dateTime || "",
+        r.oldReading || "",
+        r.currentReading || "",
+        r.driverName || "",
+      ]),
+      styles: { fontSize: 10, cellPadding: 2, valign: "middle", halign: "center" },
+      headStyles: { fillColor: [52, 152, 219], textColor: 255, fontStyle: "bold" },
+      margin: { top: 30 },
+    });
+    doc.save("tanker-fill-records.pdf");
+  };
 
-  
+  // ✅ When truck selected, auto-fill location + driverName + oldReading
+  const handleTruckSelect = async (truckNumber) => {
+    setTankerId(truckNumber);
+    const selectedTruck = tankerOptions.find(t => t.truckNumber === truckNumber);
+    if (selectedTruck) {
+      setSource(selectedTruck.location || "");
+      setDriverName(selectedTruck.driverName || "");
+    }
 
-  // Table below title
-  autoTable(doc, {
-    startY: 30, // 👈 ensures table starts below title
-    head: [["Truck Number", "Quantity", "Location", "Date & Time", "Old Reading", "Current Reading", "Driver Name"]],
-    body: records.map(r => [
-      r.tankerId || "",
-      r.quantity || "",
-      r.source || "",
-      r.dateTime || "",
-      r.oldReading || "",
-      r.currentReading || "",
-      r.driverName || "",
-    ]),
-    styles: {
-      fontSize: 10,
-      cellPadding: 2,
-      valign: "middle",
-      halign: "center",
-    },
-    headStyles: {
-      fillColor: [52, 152, 219],
-      textColor: 255,
-      fontStyle: "bold",
-    },
-    margin: { top: 30 },
-  });
-
-  doc.save("tanker-fill-records.pdf");
-};
-
-
+    // 🔹 Fetch last record for this truck
+    const q = query(
+      collection(db, "tankerFillOperations"),
+      where("tankerId", "==", truckNumber),
+      orderBy("createdAt", "desc"),
+      limit(1)
+    );
+    const snapshot = await getDocs(q);
+    if (!snapshot.empty) {
+      const lastRecord = snapshot.docs[0].data();
+      setOldReading(lastRecord.currentReading || "");
+    } else {
+      // first time → user must enter both readings
+      setOldReading("");
+    }
+  };
 
   return (
     <div className="tanker-fill">
@@ -130,10 +147,10 @@ export default function TankerFill({ onClose, showRecordsOnly = false }) {
             <h3>🚚 Fill Truck From: Tanker To Truck</h3>
             <form onSubmit={handleSubmit} className="tanker-form">
               <label>Truck Number:</label>
-              <select value={tankerId} onChange={e => setTankerId(e.target.value)} required>
+              <select value={tankerId} onChange={e => handleTruckSelect(e.target.value)} required>
                 <option value="">Select Truck</option>
-                {tankerOptions.map((truckNumber, index) => (
-                  <option key={index} value={truckNumber}>{truckNumber}</option>
+                {tankerOptions.map((truck, index) => (
+                  <option key={index} value={truck.truckNumber}>{truck.truckNumber}</option>
                 ))}
               </select>
 
@@ -146,10 +163,16 @@ export default function TankerFill({ onClose, showRecordsOnly = false }) {
               <label>Date & Time:</label>
               <input type="datetime-local" value={dateTime} onChange={e => setDateTime(e.target.value)} required />
 
-              <label>Old Reading (KM):</label>
-              <input type="number" value={oldReading} onChange={e => setOldReading(e.target.value)} required />
+              <label>Old Reading (LTR):</label>
+              <input
+                type="number"
+                value={oldReading}
+                onChange={e => setOldReading(e.target.value)}
+                required={!oldReading}   // required only if first time
+                disabled={!!oldReading}  // disable if auto-filled
+              />
 
-              <label>Current Reading (KM):</label>
+              <label>Current Reading (LTR):</label>
               <input type="number" value={currentReading} onChange={e => setCurrentReading(e.target.value)} required />
 
               <label>Driver Name:</label>
@@ -164,6 +187,7 @@ export default function TankerFill({ onClose, showRecordsOnly = false }) {
         )
       )}
 
+      {/* Records Table */}
       <div className="tanker-table">
         <div className="table-header">
           <h4>🚚 Tanker Fill Records</h4>

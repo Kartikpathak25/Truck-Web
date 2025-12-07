@@ -1,24 +1,47 @@
-// src/pages/Dashboard/Oilmanagement/operation/TruckFill.js
 import React, { useState, useEffect } from "react";
-// TankerFill.jsx / TruckFill.jsx
 import { db } from "../../../../../firebase";
-
-import { collection, addDoc, onSnapshot, serverTimestamp, deleteDoc, doc } from "firebase/firestore";
+import {
+  collection,
+  addDoc,
+  getDocs,
+  onSnapshot,
+  serverTimestamp,
+  deleteDoc,
+  doc,
+} from "firebase/firestore";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import "./TruckFill.css";
+import EditTruck from "./EditTruck";
 
 export default function TruckFill({ onClose, showRecordsOnly = false }) {
-  const [form, setForm] = useState({
-    tankerId: "",
-    product: "",
-    quantity: "",
-    pumpName: "",
-    dateReceived: "",
-    driverName: "",
-    fuelRemaining: "",
-  });
+  const [tankerId, setTankerId] = useState("");
+  const [product, setProduct] = useState("");
+  const [totalPumpOil, setTotalPumpOil] = useState("");   // ✅ new field
+  const [filledOil, setFilledOil] = useState("");         // ✅ new field
+  const [remainingOil, setRemainingOil] = useState("");   // ✅ auto-calculated
+  const [pumpName, setPumpName] = useState("");
+  const [dateReceived, setDateReceived] = useState("");
+  const [driverName, setDriverName] = useState("");
+  const [truckOptions, setTruckOptions] = useState([]);
   const [records, setRecords] = useState([]);
+  const [editRecord, setEditRecord] = useState(null);
 
-  // Fetch Truck Fill records
+  // ✅ Fetch Truck Data
+  useEffect(() => {
+    const fetchTrucks = async () => {
+      const snapshot = await getDocs(collection(db, "trucks"));
+      setTruckOptions(
+        snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }))
+      );
+    };
+    fetchTrucks();
+  }, []);
+
+  // ✅ Realtime Truck Fill records
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "truckFillOperations"), snap => {
       setRecords(snap.docs.map(d => ({ id: d.id, ...d.data() })));
@@ -26,68 +49,175 @@ export default function TruckFill({ onClose, showRecordsOnly = false }) {
     return () => unsub();
   }, []);
 
-  const handleChange = e => setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  // ✅ Auto-calculate remainingOil when filledOil changes
+  useEffect(() => {
+    if (totalPumpOil && filledOil) {
+      const total = Number(totalPumpOil);
+      const filled = Number(filledOil);
+      const remaining = total - filled;
+      setRemainingOil(remaining);
+    }
+  }, [totalPumpOil, filledOil]);
+
+  const resetForm = () => {
+    setTankerId("");
+    setProduct("");
+    setTotalPumpOil("");
+    setFilledOil("");
+    setRemainingOil("");
+    setPumpName("");
+    setDateReceived("");
+    setDriverName("");
+  };
 
   const handleSubmit = async e => {
     e.preventDefault();
-    if (!form.tankerId || !form.product || !form.quantity || !form.pumpName || !form.dateReceived || !form.driverName || !form.fuelRemaining) return;
+    if (!tankerId || !product || !totalPumpOil || !filledOil || !pumpName || !dateReceived || !driverName) return;
 
     await addDoc(collection(db, "truckFillOperations"), {
-      ...form,
+      tankerId,
+      product,
+      totalPumpOil: Number(totalPumpOil),
+      filledOil: Number(filledOil),
+      remainingOil: Number(remainingOil),
+      pumpName,
+      dateReceived,
+      driverName,
       createdAt: serverTimestamp(),
     });
 
-    // Reset form
-    setForm({
-      tankerId: "",
-      product: "",
-      quantity: "",
-      pumpName: "",
-      dateReceived: "",
-      driverName: "",
-      fuelRemaining: "",
-    });
+    resetForm();
+    if (onClose) onClose();
+  };
 
+  const handleCancel = () => {
+    resetForm();
     if (onClose) onClose();
   };
 
   const handleDelete = async id => await deleteDoc(doc(db, "truckFillOperations", id));
 
+  const handleEdit = item => setEditRecord(item);
+
+  // ✅ Print all records
+  const handlePrintAll = () => {
+    const doc = new jsPDF("p", "mm", "a4");
+    autoTable(doc, {
+      startY: 25,
+      head: [["Tanker ID", "Product", "Total Pump Oil", "Filled Oil", "Remaining Oil", "Pump Name", "Date Received", "Driver Name"]],
+      body: records.map(r => [
+        r.tankerId || "",
+        r.product || "",
+        r.totalPumpOil || "",
+        r.filledOil || "",
+        r.remainingOil || "",
+        r.pumpName || "",
+        r.dateReceived || "",
+        r.driverName || "",
+      ]),
+      styles: { fontSize: 10, halign: "center", valign: "middle" },
+      headStyles: { fillColor: [52, 152, 219], textColor: 255 },
+    });
+    doc.save("truck-fill-records.pdf");
+  };
+
+  // ✅ Print single truck’s records
+  const handlePrintSingle = (truckId) => {
+    const doc = new jsPDF("p", "mm", "a4");
+    autoTable(doc, {
+      startY: 25,
+      head: [["Tanker ID", "Product", "Total Pump Oil", "Filled Oil", "Remaining Oil", "Pump Name", "Date Received", "Driver Name"]],
+      body: records
+        .filter(r => r.tankerId === truckId)
+        .map(r => [
+          r.tankerId || "",
+          r.product || "",
+          r.totalPumpOil || "",
+          r.filledOil || "",
+          r.remainingOil || "",
+          r.pumpName || "",
+          r.dateReceived || "",
+          r.driverName || "",
+        ]),
+      styles: { fontSize: 10, halign: "center", valign: "middle" },
+      headStyles: { fillColor: [52, 152, 219], textColor: 255 },
+    });
+    doc.save(`${truckId}-truck-fill.pdf`);
+  };
+
+  // ✅ When truck selected, auto-fill driverName + location
+  const handleTruckSelect = (truckNumber) => {
+    setTankerId(truckNumber);
+    const selectedTruck = truckOptions.find(t => t.truckNumber === truckNumber);
+    if (selectedTruck) {
+      setDriverName(selectedTruck.driverName || "");
+      setPumpName(selectedTruck.location || "");
+    }
+  };
+
   return (
     <div className="truck-fill">
-      {/* Render Form only if NOT showRecordsOnly */}
-      {!showRecordsOnly && (
-        <>
-          <h3>🛢️ Fill Tanker From - Petrol Pump To Tanker</h3>
-          <form onSubmit={handleSubmit} className="truck-form">
-            <input type="text" name="tankerId" placeholder="Tanker ID" value={form.tankerId} onChange={handleChange} required />
-            <input type="text" name="product" placeholder="Product" value={form.product} onChange={handleChange} required />
-            <input type="number" name="quantity" placeholder="Quantity (L)" value={form.quantity} onChange={handleChange} required />
-            <input type="text" name="pumpName" placeholder="Pump Name" value={form.pumpName} onChange={handleChange} required />
-            <input type="date" name="dateReceived" value={form.dateReceived} onChange={handleChange} required />
-            <input type="text" name="driverName" placeholder="Driver Name" value={form.driverName} onChange={handleChange} required />
-            <input type="number" name="fuelRemaining" placeholder="Fuel Remaining (L)" value={form.fuelRemaining} onChange={handleChange} required />
-            <div className="form-actions">
-              <button type="submit">Add</button>
-              <button type="button" onClick={onClose}>Cancel</button>
-            </div>
-          </form>
-        </>
+      {editRecord ? (
+        <EditTruck record={editRecord} onCancel={() => setEditRecord(null)} />
+      ) : (
+        !showRecordsOnly && (
+          <>
+            <h3>🚚 Fill Truck</h3>
+            <form onSubmit={handleSubmit} className="truck-form">
+              <label>Tanker ID:</label>
+              <select value={tankerId} onChange={e => handleTruckSelect(e.target.value)} required>
+                <option value="">Select Tanker</option>
+                {truckOptions.map((truck, index) => (
+                  <option key={index} value={truck.truckNumber}>{truck.truckNumber}</option>
+                ))}
+              </select>
+
+              <label>Product:</label>
+              <input type="text" value={product} onChange={e => setProduct(e.target.value)} required />
+
+              <label>Total Pump Oil (L):</label>
+              <input type="number" value={totalPumpOil} onChange={e => setTotalPumpOil(e.target.value)} required />
+
+              <label>Filled Oil (L):</label>
+              <input type="number" value={filledOil} onChange={e => setFilledOil(e.target.value)} required />
+
+              <label>Remaining Oil (L):</label>
+              <input type="number" value={remainingOil} readOnly />
+
+              <label>Pump Name:</label>
+              <input type="text" value={pumpName} onChange={e => setPumpName(e.target.value)} required />
+
+              <label>Date Received:</label>
+              <input type="date" value={dateReceived} onChange={e => setDateReceived(e.target.value)} required />
+
+              <label>Driver Name:</label>
+              <input type="text" value={driverName} onChange={e => setDriverName(e.target.value)} required />
+
+              <div className="form-actions">
+                <button type="submit">Add</button>
+                <button type="button" onClick={handleCancel}>Cancel</button>
+              </div>
+            </form>
+          </>
+        )
       )}
 
-      {/* Records Table (always visible) */}
-      <div className="truck-table">
-        <h4>🛢️ Truck Fill Records</h4>
+           <div className="truck-table">
+        <div className="table-header">
+          <h4>🚚 Truck Fill Records</h4>
+          <button className="print-btn" onClick={handlePrintAll}>🖨️ Print All</button>
+        </div>
         <table>
           <thead>
             <tr>
               <th>Tanker ID</th>
               <th>Product</th>
-              <th>Quantity</th>
+              <th>Total Pump Oil</th>
+              <th>Filled Oil</th>
+              <th>Remaining Oil</th>
               <th>Pump Name</th>
-              <th>Date</th>
-              <th>Driver</th>
-              <th>Fuel Remaining</th>
+              <th>Date Received</th>
+              <th>Driver Name</th>
               <th>Action</th>
             </tr>
           </thead>
@@ -96,17 +226,22 @@ export default function TruckFill({ onClose, showRecordsOnly = false }) {
               <tr key={item.id}>
                 <td>{item.tankerId}</td>
                 <td>{item.product}</td>
-                <td>{item.quantity}</td>
+                <td>{item.totalPumpOil}</td>
+                <td>{item.filledOil}</td>
+                <td>{item.remainingOil}</td>
                 <td>{item.pumpName}</td>
                 <td>{item.dateReceived}</td>
                 <td>{item.driverName}</td>
-                <td>{item.fuelRemaining}</td>
-                <td><button onClick={() => handleDelete(item.id)}>Delete</button></td>
+                <td>
+                  <button onClick={() => handleEdit(item)}>Edit</button>
+                  <button onClick={() => handleDelete(item.id)}>Delete</button>
+                  <button onClick={() => handlePrintSingle(item.tankerId)}>🖨️ Print</button>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-    </div>
+    </div>  
   );
 }

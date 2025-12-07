@@ -9,6 +9,7 @@ export default function AddTruck({ onClose }) {
     model: '',
     location: '',
     capacity: '',
+    driverName: '',   // ✅ Added driver name
     status: 'Active'
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -20,17 +21,18 @@ export default function AddTruck({ onClose }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (isSubmitting) return; // double click prevent
+    if (isSubmitting) return; // prevent double submit
 
     setIsSubmitting(true);
     try {
       await addDoc(collection(db, 'trucks'), formData);
-      onClose(); // modal close
+      onClose(); // close modal
       setFormData({
         truckNumber: '',
         model: '',
         location: '',
         capacity: '',
+        driverName: '',   // ✅ reset driver name
         status: 'Active'
       });
     } catch (error) {
@@ -76,6 +78,17 @@ export default function AddTruck({ onClose }) {
           onChange={handleChange}
           required
         />
+
+        {/* ✅ New Driver Name field */}
+        <input
+          type="text"
+          name="driverName"
+          placeholder="Driver Name"
+          value={formData.driverName}
+          onChange={handleChange}
+          required
+        />
+
         <select name="status" value={formData.status} onChange={handleChange}>
           <option value="Active">Active</option>
           <option value="Maintenance">Maintenance</option>

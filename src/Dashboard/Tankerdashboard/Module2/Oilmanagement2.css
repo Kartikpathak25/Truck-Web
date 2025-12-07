@@ -1,0 +1,49 @@
+/* Main container with Sidebar + Content */
+.oil-dashboard {
+  display: flex;
+  min-height: 100vh;
+  background: #f5f5f5;
+}
+
+/* Sidebar will take fixed width, content fills the rest */
+.oil-dashboard .sidebar {
+  flex: 0 0 250px; /* adjust width as per your sidebar */
+}
+
+/* Content area */
+.oil-content {
+  flex: 1;
+  padding: 20px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* center horizontally */
+  background: #f5f5f5;
+}
+
+/* Action buttons */
+.action-buttons {
+  display: flex;
+  gap: 15px;
+  margin: 25px 0;
+  font-size: 100px;
+}
+
+.action-buttons button {
+  padding: 10px 18px;
+  font-size: 14px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.action-buttons button:hover {
+  opacity: 0.9;
+}
+
+/* Center forms in content area */
+.form-wrapper {
+  width: 100%;
+  max-width: 900px; /* control form width */
+  margin-top: 20px;
+}

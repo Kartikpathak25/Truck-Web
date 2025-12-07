@@ -8,24 +8,31 @@ import Oilmanagement from './Pages/Modules/Oilmanagement/Oilmanagement.jsx';
 import Cityoperation from './Pages/Modules/Cityoperation/Cityoperation.jsx';
 import TankerDashboard from './Dashboard/Tankerdashboard/TankerDashboard.jsx';
 import Maintanance from './Pages/Modules/Maintananace/Maintanance.jsx';
+import Oilmanagement2 from './Dashboard/Tankerdashboard/Module2/Oilmanagement2.jsx';
+import Maintanance2 from './Dashboard/Tankerdashboard/Module2/Maintanance2.jsx';
 
 function App() {
   return (
     <Router>
       <Routes>
-        {/* Default route → Login */}
+        {/* 🔹 Default route → Login */}
         <Route path="/" element={<Login />} />
 
-        {/* Dashboard and modules */}
+        {/* 🔹 Admin Dashboard routes */}
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
         <Route path="/fleet" element={<Fleetmanagement />} />
-        <Route path="/oil" element={<Oilmanagement />} />
         <Route path="/city" element={<Cityoperation />} />
-        <Route path="/tanker-dashboard" element={<TankerDashboard />} />
         <Route path="/users" element={<UserManagement />} />
-        <Route path='/maintenance' element={<Maintanance />}/>
+        <Route path="/oil" element={<Oilmanagement />} />
+        <Route path="/maintenance" element={<Maintanance />} />
 
-        {/* Agar galat route likhe to Login par redirect */}
+        {/* ✅ Tanker Dashboard */}
+<Route path="/tanker-dashboard" element={<TankerDashboard />} />
+
+{/* ✅ Tanker pages as top-level routes */}
+       <Route path="/tankeroil" element={<Oilmanagement2 />} />
+          <Route path="/tankermaintenance" element={<Maintanance2/>} />
+        {/* 🔹 Catch-all → redirect to login */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>

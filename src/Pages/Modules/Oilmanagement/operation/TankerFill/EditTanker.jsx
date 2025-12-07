@@ -1,7 +1,7 @@
 // src/Pages/Modules/Oilmanagement/operation/TankerFill/EditTanker.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { db } from "../../../../../firebase";
-import { updateDoc, doc, serverTimestamp } from "firebase/firestore";
+import { updateDoc, doc, serverTimestamp, getDocs, collection, query, where, orderBy, limit } from "firebase/firestore";
 import "./TankerFill.css";
 
 export default function EditTanker({ record, onCancel }) {
@@ -12,14 +12,45 @@ export default function EditTanker({ record, onCancel }) {
   const [currentReading, setCurrentReading] = useState(record.currentReading);
   const [driverName, setDriverName] = useState(record.driverName);
 
+  // ✅ Auto‑fetch truck details (location + driverName) from trucks collection
+  useEffect(() => {
+    const fetchTruckDetails = async () => {
+      const snapshot = await getDocs(collection(db, "trucks"));
+      const truck = snapshot.docs.map(d => d.data()).find(t => t.truckNumber === record.tankerId);
+      if (truck) {
+        setSource(truck.location || source);
+        setDriverName(truck.driverName || driverName);
+      }
+    };
+    fetchTruckDetails();
+  }, [record.tankerId]);
+
+  // ✅ Auto‑fetch last currentReading for continuity
+  useEffect(() => {
+    const fetchLastReading = async () => {
+      const q = query(
+        collection(db, "tankerFillOperations"),
+        where("tankerId", "==", record.tankerId),
+        orderBy("createdAt", "desc"),
+        limit(1)
+      );
+      const snapshot = await getDocs(q);
+      if (!snapshot.empty) {
+        const lastRecord = snapshot.docs[0].data();
+        setOldReading(Number(lastRecord.currentReading) || oldReading);
+      }
+    };
+    fetchLastReading();
+  }, [record.tankerId]);
+
   const handleUpdate = async e => {
     e.preventDefault();
     await updateDoc(doc(db, "tankerFillOperations", record.id), {
-      quantity,
+      quantity: Number(quantity),
       source,
       dateTime,
-      oldReading,
-      currentReading,
+      oldReading: Number(oldReading),
+      currentReading: Number(currentReading),
       driverName,
       updatedAt: serverTimestamp(),
     });
@@ -43,7 +74,7 @@ export default function EditTanker({ record, onCancel }) {
         <input type="datetime-local" value={dateTime} onChange={e => setDateTime(e.target.value)} required />
 
         <label>Old Reading (KM):</label>
-        <input type="number" value={oldReading} onChange={e => setOldReading(e.target.value)} required />
+        <input type="number" value={oldReading} onChange={e => setOldReading(e.target.value)} required disabled />
 
         <label>Current Reading (KM):</label>
         <input type="number" value={currentReading} onChange={e => setCurrentReading(e.target.value)} required />

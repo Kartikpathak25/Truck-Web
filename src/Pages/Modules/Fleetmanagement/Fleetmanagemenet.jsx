@@ -125,6 +125,7 @@ const Fleetmanagement = () => {
               <h3>{truck.truckNumber} <span className="truck-model">({truck.model})</span></h3>
               <p><strong>📍 Location:</strong> {truck.location}</p>
               <p><strong>🛢 Capacity:</strong> {truck.capacity}</p>
+              <p><strong>👨‍✈️ Driver:</strong> {truck.driverName}</p> {/* ✅ Added driver name */}
               <p><strong>⚙️ Status:</strong> {truck.status}</p>
 
               <div className="card-actions">
