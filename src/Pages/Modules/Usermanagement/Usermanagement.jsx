@@ -3,7 +3,7 @@ import AddUserModal from '../Usermanagement/CRUD/Add/Adduser';
 import EditUserModal from '../Usermanagement/CRUD/Edit/Edituser';
 import Sidebar from '../../../Component/Sidebar/Sidebar';
 import { collection, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
-import { db } from '../../../firebase';  // 👈 ensure correct path
+import { db } from '../../../firebase';
 import './Usermanagement.css';
 
 export default function UserManagement() {
@@ -19,31 +19,10 @@ export default function UserManagement() {
         id: doc.id,
         ...doc.data(),
       }));
-      console.log("Realtime Users:", data);
       setUsers(data);
     });
-
     return () => unsub();
   }, []);
-
-  // 🔹 Add user locally (modal submit)
-  const handleAddUser = (newUserData) => {
-    const name = newUserData.name || "Unnamed User";
-    const initials = name
-      .split(' ')
-      .map(word => word[0])
-      .join('')
-      .toUpperCase();
-
-    const newUser = {
-      ...newUserData,
-      name,
-      initials,
-    };
-
-    setUsers(prev => [...prev, newUser]);
-    setShowModal(false);
-  };
 
   // 🔹 Update user locally
   const handleUpdateUser = (updatedUser) => {
@@ -56,16 +35,14 @@ export default function UserManagement() {
 
   // 🔹 Delete user from Firestore
   const handleDeleteUser = async (userId) => {
-    const confirmDelete = window.confirm("Are you sure you want to delete this user?");
-    if (!confirmDelete) return;
-
+    if (!window.confirm("Are you sure you want to delete this user?")) return;
     try {
       await deleteDoc(doc(db, "users", userId));
       setUsers(prev => prev.filter((u) => u.id !== userId));
       alert("User deleted successfully!");
     } catch (error) {
       console.error("Error deleting user:", error);
-      alert("Failed to delete user");
+      alert("Failed to delete user. Check Firestore rules.");
     }
   };
 
@@ -81,7 +58,9 @@ export default function UserManagement() {
       <div className="main-content">
         <div className="header">
           <h2>User Management</h2>
-          <button className="add-user-btn" onClick={() => setShowModal(true)}>+ Add New User</button>
+          <button className="add-user-btn" onClick={() => setShowModal(true)}>
+            + Add New User
+          </button>
         </div>
 
         <div className="filters">
@@ -99,6 +78,8 @@ export default function UserManagement() {
               <th>User</th>
               <th>LIC</th>
               <th>Mobile</th>
+              <th>Assigned Type</th>
+              <th>Assigned Model</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -118,6 +99,8 @@ export default function UserManagement() {
                 </td>
                 <td>{user.LIC || "N/A"}</td>
                 <td>{user.MobNumber || "N/A"}</td>
+                <td>{user.assignedType || "N/A"}</td>
+                <td>{user.assignedTruckModel || "N/A"}</td>
                 <td>
                   <button className="edit" onClick={() => setEditUser(user)}>✏️ Edit</button>
                   <button className="delete" onClick={() => handleDeleteUser(user.id)}>🗑️ Delete</button>
@@ -128,10 +111,7 @@ export default function UserManagement() {
         </table>
 
         {showModal && (
-          <AddUserModal
-            onClose={() => setShowModal(false)}
-            onSubmit={handleAddUser}
-          />
+          <AddUserModal onClose={() => setShowModal(false)} />
         )}
 
         {editUser && (

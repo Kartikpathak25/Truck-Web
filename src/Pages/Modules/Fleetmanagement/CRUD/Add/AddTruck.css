@@ -1,44 +1,85 @@
+/* ---------- Container ---------- */
 .add-truck-form-container {
-  background: #f9f9f9;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  max-width: 400px;
-  margin: auto;
+  background: #ffffff;
+  padding: 28px;
+  border-radius: 14px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.08);
+  max-width: 480px;
+  margin: 40px auto;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.add-truck-form-container:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.12);
 }
 
 .add-truck-form-container h2 {
-  margin-bottom: 16px;
-  font-size: 1.5rem;
+  margin-bottom: 20px;
+  font-size: 1.6rem;
+  font-weight: 700;
+  text-align: center;
+  color: #2c3e50;
 }
 
+/* ---------- Inputs & Selects ---------- */
 .add-truck-form-container input,
 .add-truck-form-container select {
   width: 100%;
-  padding: 10px;
-  margin-bottom: 12px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  border: 1px solid #d6dbe3;
+  border-radius: 10px;
+  font-size: 14px;
+  background-color: #f9fbfc;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
+.add-truck-form-container input:focus,
+.add-truck-form-container select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  outline: none;
+}
+
+/* ---------- Buttons ---------- */
 .form-buttons {
   display: flex;
   justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
 }
 
-.submit-btn {
-  background-color: #28a745;
-  color: white;
-  border: none;
-  padding: 10px 16px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
+.submit-btn,
 .cancel-btn {
-  background-color: #ccc;
+  flex: 1;
+  padding: 12px 18px;
+  border-radius: 10px;
   border: none;
-  padding: 10px 16px;
-  border-radius: 6px;
   cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Submit button */
+.submit-btn {
+  background: linear-gradient(135deg, #28a745, #218838);
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(40, 167, 69, 0.15);
+}
+.submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(40, 167, 69, 0.25);
+}
+
+/* Cancel button */
+.cancel-btn {
+  background: linear-gradient(135deg, #adb5bd, #6c757d);
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(108, 117, 125, 0.15);
+}
+.cancel-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(108, 117, 125, 0.25);
 }

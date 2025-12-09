@@ -1,18 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './AddTruck.css';
 import { db } from "../../../../../firebase";
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs } from 'firebase/firestore';
 
 export default function AddTruck({ onClose }) {
   const [formData, setFormData] = useState({
+    type: 'Vehicle',
     truckNumber: '',
     model: '',
     location: '',
     capacity: '',
-    driverName: '',   // ✅ Added driver name
+    currentReading: '',
+    driverName: '',
     status: 'Active'
   });
+
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [locations, setLocations] = useState([]);
+
+  // 🔥 Fetch locations from cities collection
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const snapshot = await getDocs(collection(db, "cities"));
+        const locs = snapshot.docs.map(doc => doc.data().name); // 👈 adjust if field differs
+        setLocations(locs.filter(Boolean));
+      } catch (error) {
+        console.error("Error fetching locations:", error);
+      }
+    };
+    fetchLocations();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -21,22 +39,28 @@ export default function AddTruck({ onClose }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (isSubmitting) return; // prevent double submit
+    if (isSubmitting) return;
 
     setIsSubmitting(true);
     try {
-      await addDoc(collection(db, 'trucks'), formData);
-      onClose(); // close modal
+      const collectionName = formData.type === 'Tanker' ? 'tankers' : 'trucks';
+      await addDoc(collection(db, collectionName), formData);
+
+      // Reset form after successful add
       setFormData({
+        type: 'Vehicle',
         truckNumber: '',
         model: '',
         location: '',
         capacity: '',
-        driverName: '',   // ✅ reset driver name
+        currentReading: '',
+        driverName: '',
         status: 'Active'
       });
+
+      onClose();
     } catch (error) {
-      console.error('Error adding truck:', error);
+      console.error('Error adding record:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -44,16 +68,24 @@ export default function AddTruck({ onClose }) {
 
   return (
     <div className="add-truck-form-container">
-      <h2>Add New Truck</h2>
+      <h2>Add New Vehicle or Tanker</h2>
       <form onSubmit={handleSubmit}>
+        
+        {/* Type dropdown */}
+        <select name="type" value={formData.type} onChange={handleChange}>
+          <option value="Vehicle">Vehicle</option>
+          <option value="Tanker">Tanker</option>
+        </select>
+
         <input
           type="text"
           name="truckNumber"
-          placeholder="Truck Number"
+          placeholder="Vehicle / Tanker Number"
           value={formData.truckNumber}
           onChange={handleChange}
           required
         />
+
         <input
           type="text"
           name="model"
@@ -62,14 +94,20 @@ export default function AddTruck({ onClose }) {
           onChange={handleChange}
           required
         />
-        <input
-          type="text"
+
+        {/* Location dropdown */}
+        <select
           name="location"
-          placeholder="Location"
           value={formData.location}
           onChange={handleChange}
           required
-        />
+        >
+          <option value="">Select Location</option>
+          {locations.map((loc, index) => (
+            <option key={index} value={loc}>{loc}</option>
+          ))}
+        </select>
+
         <input
           type="text"
           name="capacity"
@@ -79,7 +117,15 @@ export default function AddTruck({ onClose }) {
           required
         />
 
-        {/* ✅ New Driver Name field */}
+        <input
+          type="number"
+          name="currentReading"
+          placeholder="Current Reading (km)"
+          value={formData.currentReading}
+          onChange={handleChange}
+          required
+        />
+
         <input
           type="text"
           name="driverName"
@@ -96,9 +142,14 @@ export default function AddTruck({ onClose }) {
 
         <div className="form-buttons">
           <button type="submit" className="submit-btn" disabled={isSubmitting}>
-            {isSubmitting ? 'Adding...' : 'Add Truck'}
+            {isSubmitting ? 'Adding...' : `Add ${formData.type}`}
           </button>
-          <button type="button" className="cancel-btn" onClick={onClose} disabled={isSubmitting}>
+          <button
+            type="button"
+            className="cancel-btn"
+            onClick={onClose}
+            disabled={isSubmitting}
+          >
             Cancel
           </button>
         </div>
