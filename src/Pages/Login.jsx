@@ -1,37 +1,90 @@
+// src/Pages/Login/Login.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth, db } from '../firebase';
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc } from 'firebase/firestore';
 import './Login.css';
 
 const Login = () => {
-  const [username, setUsername] = useState('');
+  const [username, setUsername] = useState('');   // email
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
+
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, username, password);
+      // 1️⃣ Firebase Auth login
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        username,
+        password
+      );
+
       const userId = userCredential.user.uid;
 
-      const userDoc = await getDoc(doc(db, "users", userId));
-      if (!userDoc.exists()) {
-        alert("User not found in database!");
+      // 2️⃣ Fetch user document from "users"
+      const userSnap = await getDoc(doc(db, 'users', userId));
+      if (!userSnap.exists()) {
+        alert('User document not found in Firestore!');
+        setIsLoading(false);
         return;
       }
 
-      const userData = userDoc.data();
-      const role = userData.role;
+      const userData = userSnap.data();
 
-      if (role === 'Tanker') {
-        navigate('/tanker-dashboard');
-      } else if (role === 'Admin') {
-        navigate('/admin-dashboard');
+      // 3️⃣ Fetch assigned vehicle / tanker by assignedId
+      let vehicleData = null;
+
+      if (userData.assignedType === 'Vehicle') {
+        const vSnap = await getDoc(doc(db, 'trucks', userData.assignedId));
+        if (vSnap.exists()) vehicleData = vSnap.data();
+      } else if (userData.assignedType === 'Tanker') {
+        const tSnap = await getDoc(doc(db, 'tankers', userData.assignedId));
+        if (tSnap.exists()) vehicleData = tSnap.data();
       }
-    } catch (error) {
-      alert('Login failed ❌ ' + error.message);
+
+      // 4️⃣ Build final object saved in localStorage
+      const mappedUser = {
+        uid: userId,
+        name: userData.name || '',
+        email: userData.email || '',
+        LIC: userData.LIC || '',
+        MobNumber: userData.MobNumber || '',
+        role: userData.role || '',
+        assignedType: userData.assignedType || '',
+        assignedId: userData.assignedId || '',
+
+        // 👇 yahi fields Maintenance2.jsx use karega
+        assignedTruckNumber: vehicleData?.truckNumber || '',
+        assignedTruckModel: vehicleData?.model || '',
+        driverName: vehicleData?.driverName || '',
+
+        // optional extra fields (dashboard ke liye)
+        capacity: vehicleData?.capacity || '',
+        currentReading: vehicleData?.currentReading || '',
+        location: vehicleData?.location || '',
+        status: vehicleData?.status || '',
+      };
+
+      localStorage.setItem('loggedUser', JSON.stringify(mappedUser));
+
+      // 5️⃣ Role based navigation
+      if (mappedUser.role === 'Admin') {
+        navigate('/admin-dashboard');
+      } else if (mappedUser.role === 'Tanker' || mappedUser.role === 'User') {
+        navigate('/tanker-dashboard');
+      } else {
+        alert('Role invalid! Please contact admin.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Login Failed ❌ ' + err.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -40,47 +93,44 @@ const Login = () => {
       <h1>Truck Oil Management</h1>
 
       <div className="login-content">
-        {/* Left side image */}
         <div className="login-image">
-          <img src="home.png" alt="Login Illustration" />
+          <img src="home.png" alt="Login" />
         </div>
 
-        {/* Right side login box */}
         <div className="login-box">
           <h2>Welcome To The Login Page</h2>
-          <p>Sign in to manage the fleet and oil operations</p>
+          <p>Sign in to manage fleet operations</p>
 
-          {/* ✅ Single form only */}
           <form onSubmit={handleLogin}>
             <div className="form-group">
-              <label htmlFor="username">Email</label>
+              <label>Email</label>
               <input
                 type="email"
-                id="username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="you@company.com"
                 required
+                disabled={isLoading}
               />
             </div>
 
             <div className="form-group">
-              <label htmlFor="password">Password</label>
+              <label>Password</label>
               <input
                 type="password"
-                id="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
                 required
+                disabled={isLoading}
               />
             </div>
 
-            <div className="form-group">
-              <a href="/forgot-password">Forgot password?</a>
-            </div>
-
-            <button type="submit" className="login-button">Login</button>
+            <button
+              type="submit"
+              className="login-button"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Logging in...' : 'Login'}
+            </button>
           </form>
         </div>
       </div>

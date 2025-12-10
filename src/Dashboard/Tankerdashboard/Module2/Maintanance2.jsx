@@ -1,21 +1,21 @@
-// src/components/Maintanance/Maintanance.js
+// src/components/Maintanance/Maintanance2.js
 import React, { useState, useEffect } from "react";
 import "./Maintanance2.css";
 import { useForm } from "react-hook-form";
 import Sidebar from "../../../Component/Sidebar/Sidebar2/Sidebar2";
+
 import {
   FaUser,
   FaCalendarAlt,
   FaTools,
   FaRupeeSign,
-  FaSortAmountUp,
   FaClipboardList,
   FaTrash,
   FaPrint,
   FaWrench,
+  FaTruck,
 } from "react-icons/fa";
 
-// FIREBASE
 import { db } from "../../../firebase";
 import {
   collection,
@@ -26,7 +26,6 @@ import {
   doc,
 } from "firebase/firestore";
 
-// PDF
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -35,8 +34,8 @@ export default function Maintanance2() {
   const [showForm, setShowForm] = useState(false);
   const [editIndex, setEditIndex] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
-
-  // DELETE POPUP STATE
+  const [userVehicle, setUserVehicle] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [deleteIndex, setDeleteIndex] = useState(null);
 
@@ -45,43 +44,95 @@ export default function Maintanance2() {
     handleSubmit,
     reset,
     setValue,
+    watch,
     formState: { errors },
   } = useForm();
 
-  // 🔥 FETCH DATA
+  // 👀 watch price & serviceCharge for auto total
+  const watchPrice = watch("price");
+  const watchServiceCharge = watch("serviceCharge");
+
+  // 🔥 Get logged user from LocalStorage
+  useEffect(() => {
+    const stored = localStorage.getItem("loggedUser");
+    if (stored) {
+      const u = JSON.parse(stored);
+      if (u.assignedTruckNumber) {
+        setUserVehicle({
+          truckNumber: u.assignedTruckNumber,
+          vehicleModel: u.assignedTruckModel,
+          driverName: u.driverName || u.name || "",
+        });
+      }
+    }
+  }, []);
+
+  // 🔥 FETCH MAINTENANCE DATA
   useEffect(() => {
     const fetchMaintenance = async () => {
-      const snapshot = await getDocs(collection(db, "maintenance"));
-      const list = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setMaintenanceList(list);
+      try {
+        const snapshot = await getDocs(collection(db, "maintenance"));
+        const list = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+        setMaintenanceList(list);
+      } catch (error) {
+        console.error("Error fetching maintenance:", error);
+      } finally {
+        setIsLoading(false);
+      }
     };
     fetchMaintenance();
   }, []);
 
-  // 🔥 ADD / UPDATE
-  const onSubmit = async (data) => {
-    if (editIndex !== null) {
-      // UPDATE
-      const id = maintenanceList[editIndex].id;
-      const ref = doc(db, "maintenance", id);
-      await updateDoc(ref, data);
+  // 🧮 Auto-calc totalPrice = price + serviceCharge
+  useEffect(() => {
+    const p = parseFloat(watchPrice || 0);
+    const s = parseFloat(watchServiceCharge || 0);
+    const total = p + s;
+    if (!isNaN(total)) setValue("totalPrice", Number(total.toFixed(2)));
+  }, [watchPrice, watchServiceCharge, setValue]);
 
-      const updatedList = [...maintenanceList];
-      updatedList[editIndex] = { id, ...data };
-      setMaintenanceList(updatedList);
+  const openAddForm = () => {
+    reset();
+    setEditIndex(null);
 
-      setEditIndex(null);
-    } else {
-      // ADD
-      const ref = await addDoc(collection(db, "maintenance"), data);
-      setMaintenanceList([...maintenanceList, { id: ref.id, ...data }]);
+    if (userVehicle) {
+      setValue("truckNumber", userVehicle.truckNumber);
+      setValue("vehicleModel", userVehicle.vehicleModel);
+      setValue("driverName", userVehicle.driverName);
     }
 
-    reset();
-    setShowForm(false);
+    setShowForm(true);
   };
 
-  // EDIT
+  const onSubmit = async (data) => {
+    try {
+      if (userVehicle) {
+        data.truckNumber = userVehicle.truckNumber;
+        data.vehicleModel = userVehicle.vehicleModel;
+        data.driverName = userVehicle.driverName;
+      }
+
+      if (editIndex !== null) {
+        const id = maintenanceList[editIndex].id;
+        const ref = doc(db, "maintenance", id);
+        await updateDoc(ref, data);
+
+        const updated = [...maintenanceList];
+        updated[editIndex] = { id, ...data };
+        setMaintenanceList(updated);
+        setEditIndex(null);
+      } else {
+        const ref = await addDoc(collection(db, "maintenance"), data);
+        setMaintenanceList([...maintenanceList, { id: ref.id, ...data }]);
+      }
+      reset();
+      setShowForm(false);
+    } catch (error) {
+      console.error("Error saving maintenance:", error);
+      alert("Failed to save maintenance record");
+    }
+  };
+
   const handleEdit = (index) => {
     const item = maintenanceList[index];
     Object.keys(item).forEach((key) => setValue(key, item[key]));
@@ -89,66 +140,96 @@ export default function Maintanance2() {
     setShowForm(true);
   };
 
-  // DELETE POPUP OPEN
   const handleDeleteClick = (index) => {
     setDeleteIndex(index);
     setShowDeletePopup(true);
   };
 
-  // DELETE CONFIRM
   const confirmDelete = async () => {
-    const id = maintenanceList[deleteIndex].id;
-    await deleteDoc(doc(db, "maintenance", id));
-
-    const newList = maintenanceList.filter((_, i) => i !== deleteIndex);
-    setMaintenanceList(newList);
-
-    setShowDeletePopup(false);
+    try {
+      const id = maintenanceList[deleteIndex].id;
+      await deleteDoc(doc(db, "maintenance", id));
+      setMaintenanceList((prev) => prev.filter((_, i) => i !== deleteIndex));
+    } catch (error) {
+      console.error("Error deleting maintenance:", error);
+      alert("Failed to delete record");
+    } finally {
+      setShowDeletePopup(false);
+    }
   };
 
-  const cancelDelete = () => setShowDeletePopup(false);
+  const filteredList = maintenanceList.filter((item) => {
+    if (!userVehicle) return false;
+    const sameTruck =
+      (item.truckNumber || "").toLowerCase() ===
+      userVehicle.truckNumber.toLowerCase();
 
-  // SEARCH
-  const filteredList = maintenanceList.filter(
-    (item) =>
-      item.truckId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.driverName?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+    if (!sameTruck) return false;
 
-  // 🖨️ Per-card PDF export
+    const term = searchTerm.toLowerCase();
+    return (
+      item.truckNumber?.toLowerCase().includes(term) ||
+      item.driverName?.toLowerCase().includes(term) ||
+      item.vehicleModel?.toLowerCase().includes(term)
+    );
+  });
+
   const handlePrintCard = (item) => {
-    const doc = new jsPDF("p", "mm", "a4");
-    const pageWidth = doc.internal.pageSize.getWidth();
+    const pdf = new jsPDF("p", "mm", "a4");
+    const pageWidth = pdf.internal.pageSize.getWidth();
 
-    // Header
-    doc.setFontSize(15);
-    doc.text("Truck Maintenance Record", pageWidth / 2, 15, { align: "center" });
+    pdf.setFontSize(15);
+    pdf.text("Truck Maintenance Record", pageWidth / 2, 15, {
+      align: "center",
+    });
 
-    // Table with single record
-    autoTable(doc, {
+    autoTable(pdf, {
       startY: 25,
       head: [["Field", "Value"]],
       body: [
-        ["Truck ID", item.truckId || ""],
-        ["Driver Name", item.driverName || ""],
-        ["Date", item.date || ""],
-        ["Spare Part", item.partName || ""],
-        ["Price (₹)", item.price || ""],
-        ["Quantity", item.quantity || ""],
-        ["Service Charge (₹)", item.serviceCharge || ""],
-        ["Notes", item.notes || ""],
+        ["Truck Number", item.truckNumber],
+        ["Vehicle Model", item.vehicleModel || "N/A"],
+        ["Driver Name", item.driverName],
+        ["Date", item.date],
+        ["Spare Part", item.partName],
+        ["Price (₹)", item.price],
+        ["Service Charge (₹)", item.serviceCharge],
+        ["Total (₹)", item.totalPrice],
+        ["Notes", item.notes],
       ],
-      styles: { fontSize: 11, cellPadding: 3, valign: "middle" },
-      headStyles: { fillColor: [52, 152, 219], textColor: 255, fontStyle: "bold" },
-      columnStyles: {
-        0: { cellWidth: 60 },
-        1: { cellWidth: pageWidth - 60 - 20 }, // minus margins
-      },
+      styles: { fontSize: 11, cellPadding: 3 },
+      headStyles: { fillColor: [52, 152, 219], textColor: 255 },
       margin: { left: 10, right: 10 },
     });
 
-    doc.save(`maintenance-${item.truckId || "record"}.pdf`);
+    pdf.save(`maintenance-${item.truckNumber}.pdf`);
   };
+
+  if (isLoading) {
+    return (
+      <div className="maintenance-layout">
+        <Sidebar />
+        <div className="maintenance-content">
+          <p style={{ textAlign: "center", padding: "40px" }}>
+            Loading maintenance data...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!userVehicle) {
+    return (
+      <div className="maintenance-layout">
+        <Sidebar />
+        <div className="maintenance-content">
+          <p style={{ textAlign: "center", padding: "40px", color: "#d9534f" }}>
+            No vehicle assigned to this user. Please contact admin.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="maintenance-layout">
@@ -156,8 +237,15 @@ export default function Maintanance2() {
 
       <div className="maintenance-content">
         <div className="maintenance-header">
-          <h2>Truck Maintenance</h2>
-          <button className="add-btn" onClick={() => setShowForm(true)}>
+          <div>
+            <h2>🔧 Truck Maintenance</h2>
+            <p style={{ color: "#666", marginTop: "5px", fontSize: "14px" }}>
+              Vehicle: <strong>{userVehicle.truckNumber}</strong> | Model:{" "}
+              <strong>{userVehicle.vehicleModel}</strong> | Driver:{" "}
+              <strong>{userVehicle.driverName}</strong>
+            </p>
+          </div>
+          <button className="add-btn" onClick={openAddForm}>
             + Add Maintenance
           </button>
         </div>
@@ -165,65 +253,101 @@ export default function Maintanance2() {
         <input
           type="text"
           className="search-bar"
-          placeholder="Search Truck ID or Driver Name"
+          placeholder="Search Truck Number, Vehicle Model or Driver Name"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
 
-        {/* FORM MODAL */}
+        {/* ------------ FORM MODAL ------------ */}
         {showForm && (
           <div className="modal-overlay">
             <div className="modal-form">
-              <h3>{editIndex !== null ? "Edit Maintenance" : "Add Maintenance"}</h3>
+              <h3>
+                {editIndex !== null ? "Edit Maintenance" : "Add Maintenance"}
+              </h3>
 
               <form onSubmit={handleSubmit(onSubmit)}>
                 <input
                   type="text"
-                  placeholder="Truck ID"
-                  {...register("truckId", { required: "Truck ID required" })}
+                  placeholder="Truck Number"
+                  {...register("truckNumber")}
+                  readOnly
+                  style={{ backgroundColor: "#f0f0f0", cursor: "not-allowed" }}
                 />
-                {errors.truckId && <p className="error">{errors.truckId.message}</p>}
+
+                <input
+                  type="text"
+                  placeholder="Vehicle Model"
+                  {...register("vehicleModel")}
+                  readOnly
+                  style={{ backgroundColor: "#f0f0f0", cursor: "not-allowed" }}
+                />
 
                 <input
                   type="text"
                   placeholder="Driver Name"
-                  {...register("driverName", { required: "Driver required" })}
+                  {...register("driverName")}
+                  readOnly
+                  style={{ backgroundColor: "#f0f0f0", cursor: "not-allowed" }}
                 />
-                {errors.driverName && (
-                  <p className="error">{errors.driverName.message}</p>
-                )}
 
-                <input type="date" {...register("date", { required: "Date required" })} />
-                {errors.date && <p className="error">{errors.date.message}</p>}
+                <input
+                  type="date"
+                  {...register("date", { required: "Date required" })}
+                />
+                {errors.date && (
+                  <p className="error">{errors.date.message}</p>
+                )}
 
                 <input
                   type="text"
-                  placeholder="Spare Part"
+                  placeholder="Spare Part Name"
                   {...register("partName", { required: "Part required" })}
                 />
+                {errors.partName && (
+                  <p className="error">{errors.partName.message}</p>
+                )}
 
+                {/* PRICE */}
                 <input
                   type="number"
                   placeholder="Price (₹)"
                   {...register("price", { required: "Price required" })}
                 />
+                {errors.price && (
+                  <p className="error">{errors.price.message}</p>
+                )}
 
-                <input
-                  type="number"
-                  placeholder="Quantity"
-                  {...register("quantity", { required: "Quantity required" })}
-                />
-
+                {/* SERVICE CHARGE */}
                 <input
                   type="number"
                   placeholder="Service Charge (₹)"
-                  {...register("serviceCharge", { required: "Service Charge required" })}
+                  {...register("serviceCharge", {
+                    required: "Service charge required",
+                  })}
+                />
+                {errors.serviceCharge && (
+                  <p className="error">{errors.serviceCharge.message}</p>
+                )}
+
+                {/* AUTO TOTAL (READ ONLY) */}
+                <input
+                  type="number"
+                  placeholder="Total (₹)"
+                  {...register("totalPrice")}
+                  readOnly
+                  style={{ backgroundColor: "#f0f0f0", cursor: "not-allowed" }}
                 />
 
-                <textarea placeholder="Notes" {...register("notes")} />
+                <textarea
+                  placeholder="Notes / Additional Details"
+                  {...register("notes")}
+                />
 
                 <div className="form-actions">
-                  <button type="submit">Save</button>
+                  <button type="submit" className="submit-btn">
+                    Save Maintenance
+                  </button>
                   <button
                     type="button"
                     className="cancel-btn"
@@ -237,18 +361,21 @@ export default function Maintanance2() {
           </div>
         )}
 
-        {/* DELETE POPUP */}
+        {/* ------------ DELETE POPUP ------------ */}
         {showDeletePopup && (
           <div className="popup-overlay">
             <div className="popup-box">
-              <h3>Delete Record?</h3>
+              <h3>⚠️ Delete Record?</h3>
               <p>This action cannot be undone.</p>
 
               <div className="popup-buttons">
                 <button className="delete-confirm" onClick={confirmDelete}>
                   Delete
                 </button>
-                <button className="cancel-popup" onClick={cancelDelete}>
+                <button
+                  className="cancel-popup"
+                  onClick={() => setShowDeletePopup(false)}
+                >
                   Cancel
                 </button>
               </div>
@@ -256,64 +383,78 @@ export default function Maintanance2() {
           </div>
         )}
 
-        {/* CARD LIST */}
+        {/* ------------ CARD LIST ------------ */}
         <div className="maintenance-list">
-          {filteredList.map((item, index) => (
-            <div key={item.id} className="maintenance-card">
-              {/* Replaced image with gradient icon */}
-              <div className="card-icon">
-                <FaWrench />
-              </div>
+          {filteredList.length === 0 ? (
+            <p style={{ textAlign: "center", color: "#999", padding: "40px" }}>
+              No maintenance records found. Click "+ Add Maintenance" to create
+              one.
+            </p>
+          ) : (
+            filteredList.map((item, index) => (
+              <div key={item.id} className="maintenance-card">
+                <div className="card-icon">
+                  <FaWrench />
+                </div>
 
-              <div className="card-content">
-                <h3>{item.truckId}</h3>
+                <div className="card-content">
+                  <h3>
+                    <FaTruck /> {item.truckNumber}
+                  </h3>
 
-                <p>
-                  <FaUser /> <strong>Driver:</strong> {item.driverName}
-                </p>
-                <p>
-                  <FaCalendarAlt /> <strong>Date:</strong> {item.date}
-                </p>
-                <p>
-                  <FaTools /> <strong>Parts:</strong> {item.partName}
-                </p>
-                <p>
-                  <FaRupeeSign /> <strong>Price:</strong> ₹{item.price}
-                </p>
-                <p>
-                  <FaSortAmountUp /> <strong>Qty:</strong> {item.quantity}
-                </p>
-                <p>
-                  <FaRupeeSign /> <strong>Service:</strong> ₹{item.serviceCharge}
-                </p>
-                <p>
-                  <FaClipboardList /> <strong>Notes:</strong> {item.notes}
-                </p>
+                  <p>
+                    <strong>Vehicle Model:</strong> {item.vehicleModel || "N/A"}
+                  </p>
 
-                {/* BUTTON ROW */}
-                <div className="card-actions">
-                  <button className="edit-btn" onClick={() => handleEdit(index)}>
-                    Edit
-                  </button>
+                  <p>
+                    <FaUser /> <strong>Driver:</strong> {item.driverName}
+                  </p>
+                  <p>
+                    <FaCalendarAlt /> <strong>Date:</strong> {item.date}
+                  </p>
+                  <p>
+                    <FaTools /> <strong>Parts:</strong> {item.partName}
+                  </p>
+                  <p>
+                    <FaRupeeSign /> <strong>Price:</strong> ₹{item.price}
+                  </p>
+                  <p>
+                    <FaRupeeSign /> <strong>Service Charge:</strong> ₹
+                    {item.serviceCharge}
+                  </p>
+                  <p>
+                    <FaRupeeSign /> <strong>Total:</strong> ₹{item.totalPrice}
+                  </p>
+                  <p>
+                    <FaClipboardList /> <strong>Notes:</strong> {item.notes}
+                  </p>
 
-                  <button
-                    className="delete-btn"
-                    onClick={() => handleDeleteClick(index)}
-                  >
-                    <FaTrash /> Delete
-                  </button>
+                  <div className="card-actions">
+                    <button
+                      className="edit-btn"
+                      onClick={() => handleEdit(index)}
+                    >
+                      Edit
+                    </button>
 
-                  <button
-                    className="print-btn"
-                    onClick={() => handlePrintCard(item)}
-                    title="Export PDF"
-                  >
-                    <FaPrint /> Print
-                  </button>
+                    <button
+                      className="delete-btn"
+                      onClick={() => handleDeleteClick(index)}
+                    >
+                      <FaTrash /> Delete
+                    </button>
+
+                    <button
+                      className="print-btn"
+                      onClick={() => handlePrintCard(item)}
+                    >
+                      <FaPrint /> Print
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
     </div>
