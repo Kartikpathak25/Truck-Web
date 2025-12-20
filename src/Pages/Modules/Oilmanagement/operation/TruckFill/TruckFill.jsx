@@ -162,7 +162,7 @@ export default function TruckFill({ onClose, showRecordsOnly = false }) {
       ) : (
         !showRecordsOnly && (
           <>
-            <h3>🚚 Fill Truck</h3>
+            <h3>🚚 Fill Tanker</h3>
             <form onSubmit={handleSubmit} className="truck-form">
               <label>Tanker ID:</label>
               <select value={tankerId} onChange={e => handleTruckSelect(e.target.value)} required>
@@ -204,7 +204,7 @@ export default function TruckFill({ onClose, showRecordsOnly = false }) {
 
            <div className="truck-table">
         <div className="table-header">
-          <h4>🚚 Truck Fill Records</h4>
+          <h4>🚚 Tanker Filled Records from petrol pump </h4>
           <button className="print-btn" onClick={handlePrintAll}>🖨️ Print All</button>
         </div>
         <table>
