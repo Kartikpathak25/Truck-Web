@@ -82,7 +82,7 @@ const Login = () => {
       }
     } catch (err) {
       console.error(err);
-      alert('Login Failed ❌ ' + err.message);
+      alert('You Are Entered Wrong id and password : Login Failed ❌ ');
     } finally {
       setIsLoading(false);
     }
