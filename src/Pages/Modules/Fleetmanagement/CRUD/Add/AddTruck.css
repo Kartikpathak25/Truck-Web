@@ -22,6 +22,19 @@
   color: #2c3e50;
 }
 
+/* ---------- Duplicate Error ---------- */
+.duplicate-error {
+  background: #fee2e2;
+  color: #dc2626;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border-left: 4px solid #ef4444;
+  margin-bottom: 16px;
+  font-weight: 500;
+  font-size: 14px;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.1);
+}
+
 /* ---------- Inputs & Selects ---------- */
 .add-truck-form-container input,
 .add-truck-form-container select {
@@ -32,7 +45,8 @@
   border-radius: 10px;
   font-size: 14px;
   background-color: #f9fbfc;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
 }
 
 .add-truck-form-container input:focus,
@@ -40,6 +54,28 @@
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
   outline: none;
+  background-color: #fff;
+}
+
+/* ---------- Error Input Styling ---------- */
+.add-truck-form-container input.error {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+  background-color: #fef2f2;
+}
+
+.add-truck-form-container input.error:focus {
+  border-color: #dc2626 !important;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2) !important;
+}
+
+/* ---------- Disabled State ---------- */
+.add-truck-form-container input:disabled,
+.add-truck-form-container select:disabled {
+  background-color: #f8f9fa;
+  color: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 
 /* ---------- Buttons ---------- */
@@ -59,27 +95,57 @@
   cursor: pointer;
   font-weight: 600;
   font-size: 14px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: all 0.2s ease;
+  position: relative;
 }
 
-/* Submit button */
 .submit-btn {
   background: linear-gradient(135deg, #28a745, #218838);
   color: #fff;
   box-shadow: 0 6px 18px rgba(40, 167, 69, 0.15);
 }
-.submit-btn:hover {
+.submit-btn:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 10px 24px rgba(40, 167, 69, 0.25);
 }
+.submit-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+  box-shadow: 0 2px 8px rgba(108, 117, 125, 0.15);
+}
 
-/* Cancel button */
 .cancel-btn {
   background: linear-gradient(135deg, #adb5bd, #6c757d);
   color: #fff;
   box-shadow: 0 6px 18px rgba(108, 117, 125, 0.15);
 }
-.cancel-btn:hover {
+.cancel-btn:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 10px 24px rgba(108, 117, 125, 0.25);
+}
+.cancel-btn:disabled {
+  background: #dee2e6;
+  color: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 480px) {
+  .add-truck-form-container {
+    margin: 20px 10px;
+    padding: 20px;
+  }
+  
+  .form-buttons {
+    flex-direction: column;
+  }
+  
+  .submit-btn,
+  .cancel-btn {
+    margin-bottom: 8px;
+  }
 }

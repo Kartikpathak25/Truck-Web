@@ -1,9 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { doc, updateDoc, getDocs, collection } from 'firebase/firestore';
-import { db } from "../../../../../firebase";
+import { db } from '../../../../../firebase';
 import './EditTruck.css';
 
-export default function EditTruck({ initialData, onClose, onUpdate, sourceCollection }) {
+export default function EditTruck({
+  initialData,
+  onClose,
+  onUpdate,
+  sourceCollection,
+  loading = false,          // optional prop from parent (for global loading)
+}) {
   const [formData, setFormData] = useState({
     type: 'Vehicle',
     truckNumber: '',
@@ -12,8 +18,10 @@ export default function EditTruck({ initialData, onClose, onUpdate, sourceCollec
     capacity: '',
     driverName: '',
     currentReading: '',
-    status: 'Active'
+    status: 'Active',
+    ownership: '',          // 👈 new field to match AddTruck / dashboard
   });
+
   const [locations, setLocations] = useState([]);
   const [isUpdating, setIsUpdating] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -22,11 +30,13 @@ export default function EditTruck({ initialData, onClose, onUpdate, sourceCollec
   useEffect(() => {
     const fetchLocations = async () => {
       try {
-        const snapshot = await getDocs(collection(db, "cities"));
-        const locs = snapshot.docs.map(doc => doc.data().name).filter(Boolean);
+        const snapshot = await getDocs(collection(db, 'cities'));
+        const locs = snapshot.docs
+          .map((d) => d.data().name)
+          .filter(Boolean);
         setLocations(locs);
       } catch (error) {
-        console.error("Error fetching locations:", error);
+        console.error('Error fetching locations:', error);
       }
     };
     fetchLocations();
@@ -43,24 +53,26 @@ export default function EditTruck({ initialData, onClose, onUpdate, sourceCollec
         capacity: initialData.capacity || '',
         driverName: initialData.driverName || '',
         currentReading: initialData.currentReading || '',
-        status: initialData.status || 'Active'
+        status: initialData.status || 'Active',
+        ownership: initialData.ownership || '',   // 👈 keep existing ownership
       });
     }
   }, [initialData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (isUpdating) return; // prevent double submit
+    if (isUpdating || loading) return;
+
     setErrorMsg('');
     setIsUpdating(true);
 
     try {
-      // Always update the document in its original collection
+      // Keep document in original collection
       const collectionName =
         sourceCollection ??
         (initialData?.type === 'Tanker' ? 'tankers' : 'trucks');
@@ -75,7 +87,8 @@ export default function EditTruck({ initialData, onClose, onUpdate, sourceCollec
         capacity: formData.capacity,
         driverName: formData.driverName,
         currentReading: formData.currentReading,
-        status: formData.status
+        status: formData.status,
+        ownership: formData.ownership,          // 👈 update ownership too
       });
 
       if (onUpdate) onUpdate({ id: initialData.id, ...formData });
@@ -88,25 +101,39 @@ export default function EditTruck({ initialData, onClose, onUpdate, sourceCollec
     }
   };
 
+  // Dynamic ownership labels like AddTruck
+  const ownershipLabel =
+    formData.type === 'Tanker'
+      ? 'Ownership (Own Tanker / External Tanker)'
+      : 'Ownership (Own Vehicle / External Vehicle)';
+
+  const ownOptionText =
+    formData.type === 'Tanker' ? 'Own Tanker' : 'Own Vehicle';
+
+  const externalOptionText =
+    formData.type === 'Tanker' ? 'External Tanker' : 'External Vehicle';
+
+  const disabledAll = isUpdating || loading;
+
   return (
     <div className="edit-truck-form-container">
       <h2>Edit {formData.type}</h2>
 
       {errorMsg && <div className="form-error">{errorMsg}</div>}
 
-      <form onSubmit={handleSubmit} aria-busy={isUpdating}>
-        {/* Type: keep editable if you want to reflect UI, but collection stays original */}
+      <form onSubmit={handleSubmit} aria-busy={disabledAll}>
+        {/* Type (optional visual change only) */}
         <select
           name="type"
           value={formData.type}
           onChange={handleChange}
-          disabled={isUpdating}
+          disabled={disabledAll}
         >
           <option value="Vehicle">Vehicle</option>
           <option value="Tanker">Tanker</option>
         </select>
 
-        {/* Truck number (immutable ID display) */}
+        {/* Truck number (read-only) */}
         <input
           type="text"
           value={formData.truckNumber}
@@ -120,7 +147,7 @@ export default function EditTruck({ initialData, onClose, onUpdate, sourceCollec
           value={formData.model}
           onChange={handleChange}
           required
-          disabled={isUpdating}
+          disabled={disabledAll}
         />
 
         <select
@@ -128,11 +155,13 @@ export default function EditTruck({ initialData, onClose, onUpdate, sourceCollec
           value={formData.location}
           onChange={handleChange}
           required
-          disabled={isUpdating}
+          disabled={disabledAll}
         >
           <option value="">Select Location</option>
           {locations.map((loc, i) => (
-            <option key={i} value={loc}>{loc}</option>
+            <option key={i} value={loc}>
+              {loc}
+            </option>
           ))}
         </select>
 
@@ -143,7 +172,7 @@ export default function EditTruck({ initialData, onClose, onUpdate, sourceCollec
           value={formData.capacity}
           onChange={handleChange}
           required
-          disabled={isUpdating}
+          disabled={disabledAll}
         />
 
         <input
@@ -153,7 +182,7 @@ export default function EditTruck({ initialData, onClose, onUpdate, sourceCollec
           value={formData.driverName}
           onChange={handleChange}
           required
-          disabled={isUpdating}
+          disabled={disabledAll}
         />
 
         <input
@@ -163,14 +192,27 @@ export default function EditTruck({ initialData, onClose, onUpdate, sourceCollec
           value={formData.currentReading}
           onChange={handleChange}
           required
-          disabled={isUpdating}
+          disabled={disabledAll}
         />
+
+        {/* Ownership dropdown (same pattern as AddTruck) */}
+        <select
+          name="ownership"
+          value={formData.ownership}
+          onChange={handleChange}
+          required
+          disabled={disabledAll}
+        >
+          <option value="">{ownershipLabel}</option>
+          <option value="own">{ownOptionText}</option>
+          <option value="external">{externalOptionText}</option>
+        </select>
 
         <select
           name="status"
           value={formData.status}
           onChange={handleChange}
-          disabled={isUpdating}
+          disabled={disabledAll}
         >
           <option value="Active">Active</option>
           <option value="Maintenance">Maintenance</option>
@@ -179,16 +221,16 @@ export default function EditTruck({ initialData, onClose, onUpdate, sourceCollec
         <div className="form-buttons">
           <button
             type="submit"
-            className={`submit-btn ${isUpdating ? 'loading' : ''}`}
-            disabled={isUpdating}
+            className={`submit-btn ${disabledAll ? 'loading' : ''}`}
+            disabled={disabledAll}
           >
-            {isUpdating ? 'Updating…' : 'Update'}
+            {disabledAll ? 'Updating…' : 'Update'}
           </button>
           <button
             type="button"
             className="cancel-btn"
             onClick={onClose}
-            disabled={isUpdating}
+            disabled={disabledAll}
           >
             Cancel
           </button>

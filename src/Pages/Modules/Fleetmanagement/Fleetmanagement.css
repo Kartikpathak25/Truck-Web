@@ -1,167 +1,276 @@
+/* Compact Fleet Dashboard – sidebar ke bilkul saath, clean + fixed status line */
+
+:root {
+  --primary: #4f46e5;
+  --primary-grad: linear-gradient(135deg, #4f46e5, #7c3aed);
+  --success: #10b981;
+  --danger: #ef4444;
+  --shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+}
+
 .fleet-dashboard {
   display: flex;
-  background: #eef2f7;
   min-height: 100vh;
-  font-family: 'Segoe UI', sans-serif;
+  background: #f3f4f6;
+  font-family: "Inter", system-ui, sans-serif;
 }
 
+/* Sidebar ke saath hi content, page static rahe */
 .fleet-content {
   flex: 1;
-  padding: 40px;
-  background: linear-gradient(to bottom right, #ffffff, #e6ecf3);
+  padding: 24px 32px;
+  overflow: hidden;
 }
 
+/* Sirf yeh area scroll karega (header + filters + cards) */
+.fleet-scroll-area {
+  height: calc(100vh - 24px);
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+/* Header */
 .fleet-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
+  margin-bottom: 16px;
 }
 
 .fleet-header h1 {
-  font-size: 28px;
-  font-weight: 600;
-  color: #333;
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  color: #111827;
 }
 
+/* Add button */
 .add-button {
-  padding: 10px 24px;
-  background: #007bff;
-  color: white;
+  padding: 10px 22px;
+  background: var(--primary-grad);
+  color: #fff;
   border: none;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  border-radius: 999px;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.3s ease;
+  box-shadow: var(--shadow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.add-button:hover {
-  background: #0056b3;
+.add-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 30px rgba(79, 70, 229, 0.35);
 }
 
+/* Filters */
 .fleet-controls {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 30px;
-  align-items: center;
-}
-
-.fleet-controls input {
-  flex: 1;
-  padding: 12px 16px;
-  border-radius: 10px;
-  border: none;
+  display: grid;
+  grid-template-columns: 220px 1fr 200px;
+  gap: 12px;
+  margin-bottom: 18px;
   background: #ffffff;
-  box-shadow: inset 0 2px 6px rgba(0,0,0,0.05);
-  font-size: 16px;
-  color: #333;
+  padding: 12px 14px;
+  border-radius: 14px;
+  box-shadow: var(--shadow);
 }
 
-.fleet-controls input::placeholder {
-  color: #888;
-}
-
+.fleet-controls input,
 .fleet-controls select {
-  width: 180px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  padding: 10px 12px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.fleet-controls input:focus,
+.fleet-controls select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.15);
+}
+
+/* Toast message */
+.message {
+  margin-bottom: 14px;
   padding: 10px 14px;
   border-radius: 10px;
-  border: none;
-  background: #ffffff;
-  box-shadow: inset 0 2px 6px rgba(0,0,0,0.05);
-  font-size: 15px;
-  color: #333;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
 }
 
+.message.error {
+  background: #fee2e2;
+  color: var(--danger);
+  border: 1px solid #fecaca;
+}
+
+.message.success {
+  background: #dcfce7;
+  color: var(--success);
+  border: 1px solid #bbf7d0;
+}
+
+/* Cards grid */
 .fleet-cards {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 24px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+  padding-bottom: 24px;
 }
 
+/* Single card */
 .fleet-card {
   background: #ffffff;
-  padding: 24px;
   border-radius: 16px;
-  width: 280px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-  transition: transform 0.2s ease;
-  position: relative;
+  padding: 16px 18px;
+  box-shadow: var(--shadow);
+  border: 1px solid #e5e7eb;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .fleet-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.18);
 }
 
 .fleet-card h3 {
-  margin-bottom: 10px;
-  font-size: 18px;
-  color: #007bff;
+  margin: 0 0 10px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
 }
 
 .truck-model {
-  color: #555;
-  font-weight: 400;
+  color: #6b7280;
+  font-size: 13px;
 }
 
+/* Common card text */
 .fleet-card p {
-  margin: 6px 0;
-  font-size: 15px;
-  color: #444;
-}
-
-.card-actions {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 16px;
-}
-
-.edit-btn, .delete-btn {
+  margin: 4px 0;
+  font-size: 13px;
+  color: #374151;
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  font-size: 14px;
+  gap: 4px;
+}
+
+/* ---- FIXED STATUS LINE ---- */
+.fleet-card p.status-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+
+.fleet-card p.status-row .label {
+  min-width: 70px;  
+  min-height: 49px;        /* zarurat ho to 80–90 bhi kar sakte ho */
+}
+
+/* Status pill */
+.status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;      /* line break completely band */
+}
+
+.status.active {
+  background: #dcfce7;
+  color: var(--success);
+}
+
+.status.maintenance {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+/* Buttons inside card */
+.card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.edit-btn,
+.delete-btn {
+  flex: 1;
   border: none;
-  border-radius: 8px;
+  border-radius: 999px;
+  padding: 8px 0;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: background 0.15s ease, transform 0.15s ease;
 }
 
 .edit-btn {
-  background: #f0f8ff;
-  color: #007bff;
+  background: #16a34a;
+  color: #fff;
 }
 
 .edit-btn:hover {
-  background: #e0f0ff;
+  background: #15803d;
+  transform: translateY(-1px);
 }
 
 .delete-btn {
-  background: #fff0f0;
-  color: #dc3545;
+  background: #ef4444;
+  color: #fff;
 }
 
 .delete-btn:hover {
-  background: #ffe0e0;
+  background: #dc2626;
+  transform: translateY(-1px);
 }
 
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.4);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 999;
-}
-
-.modal-content {
+/* Inline form (agar use karna ho) */
+.inline-form {
   background: #ffffff;
-  padding: 30px;
   border-radius: 16px;
-  width: 420px;
-  box-shadow: 0 12px 32px rgba(0,0,0,0.2);
+  padding: 16px 18px;
+  box-shadow: var(--shadow);
+  margin-bottom: 18px;
+  max-width: 480px;
+}
+
+.inline-form h3 {
+  margin: 0 0 12px;
+  font-size: 16px;
+}
+
+.inline-form input,
+.inline-form select {
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  font-size: 14px;
+}
+
+.inline-form-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .fleet-content {
+    padding: 16px;
+  }
+  .fleet-controls {
+    grid-template-columns: 1fr;
+  }
 }
