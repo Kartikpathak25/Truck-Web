@@ -18,10 +18,10 @@ export default function Oilmanagement2() {
         {/* Action Buttons */}
         <div className="action-buttons">
           <button onClick={() => setActiveForm("tanker")}>
-            🚚  Fill Truck :
+            🚚  Filled Truck From Tanker 
           </button>
           <button onClick={() => setActiveForm("truck")}>
-            🛢️ Fill Tanker :
+            🛢️ Filled Tanker From Pump
           </button>
         </div>
 

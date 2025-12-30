@@ -26,7 +26,7 @@ const Fleetmanagement = () => {
         collection(db, collectionName),
         where('truckNumber', '==', truckNumber)
       );
-      
+
       const querySnapshot = await getDocs(q);
       if (querySnapshot.empty) return false;
 
@@ -34,7 +34,7 @@ const Fleetmanagement = () => {
         const hasDuplicate = querySnapshot.docs.some(doc => doc.id !== excludeId);
         return hasDuplicate;
       }
-      
+
       return true;
     } catch (err) {
       console.error('Error checking duplicate:', err);
@@ -59,7 +59,7 @@ const Fleetmanagement = () => {
   const handleAddTruck = async (newTruck) => {
     setLoading(true);
     setErrorMessage('');
-    
+
     try {
       const isDuplicate = await checkDuplicate(newTruck.truckNumber, newTruck.type);
       if (isDuplicate) {
@@ -67,10 +67,10 @@ const Fleetmanagement = () => {
         setLoading(false);
         return;
       }
-      
+
       const collectionName = newTruck.type === 'Tanker' ? 'tankers' : 'trucks';
       await addDoc(collection(db, collectionName), newTruck);
-      
+
       setShowAddForm(false);
       setErrorMessage('✅ Truck added successfully!');
       setTimeout(() => setErrorMessage(''), 3000);
@@ -86,14 +86,14 @@ const Fleetmanagement = () => {
   const handleUpdateTruck = async (updatedTruck) => {
     setLoading(true);
     setErrorMessage('');
-    
+
     try {
       const isDuplicate = await checkDuplicate(
-        updatedTruck.truckNumber, 
-        updatedTruck.type, 
+        updatedTruck.truckNumber,
+        updatedTruck.type,
         updatedTruck.id
       );
-      
+
       if (isDuplicate) {
         setErrorMessage(`❌ Error: Truck Number "${updatedTruck.truckNumber}" already exists!`);
         setLoading(false);
@@ -103,7 +103,7 @@ const Fleetmanagement = () => {
       const { id, ...fieldsToUpdate } = updatedTruck;
       const collectionName = updatedTruck.type === 'Tanker' ? 'tankers' : 'trucks';
       await updateDoc(doc(db, collectionName, id), fieldsToUpdate);
-      
+
       setShowEditForm(false);
       setEditingTruck(null);
       setErrorMessage('✅ Truck updated successfully!');
@@ -126,7 +126,7 @@ const Fleetmanagement = () => {
   // 🗑 Delete Truck/Tanker
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this truck?')) return;
-    
+
     setLoading(true);
     try {
       const collectionName = selectedType === 'Tanker' ? 'tankers' : 'trucks';
@@ -164,8 +164,8 @@ const Fleetmanagement = () => {
       <div className="fleet-content">
         <div className="fleet-header">
           <h1>Fleet Management</h1>
-          <button 
-            className="add-button" 
+          <button
+            className="add-button"
             onClick={() => setShowAddForm(true)}
             disabled={loading}
           >
@@ -207,7 +207,7 @@ const Fleetmanagement = () => {
         {showAddForm && (
           <div className="modal-overlay">
             <div className="modal-content">
-              <AddTruck 
+              <AddTruck
                 onClose={() => setShowAddForm(false)}
                 onAdd={handleAddTruck}
                 loading={loading}
@@ -222,6 +222,7 @@ const Fleetmanagement = () => {
             <div className="modal-content">
               <EditTruck
                 initialData={editingTruck}
+                sourceCollection={selectedType === 'Tanker' ? 'tankers' : 'trucks'} // ✅ ADD THIS
                 onUpdate={handleUpdateTruck}
                 onClose={() => {
                   setShowEditForm(false);
@@ -229,6 +230,7 @@ const Fleetmanagement = () => {
                 }}
                 loading={loading}
               />
+
             </div>
           </div>
         )}
@@ -241,27 +243,38 @@ const Fleetmanagement = () => {
                 <span className="truck-model"> ({item.model})</span>
               </h3>
               <p><strong>📍 Location:</strong> {item.location}</p>
-              <p><strong>🧱 Capacity:</strong> {item.capacity}</p>
-              <p><strong>📊 Reading:</strong> {item.currentReading} km</p>
+             {/* 🔥 TANKER FIELDS */}
+{item.type === 'Tanker' && (
+  <>
+    <p><strong>🧱 Capacity:</strong> {item.capacity} L</p>
+    <p><strong>🛢 Remaining Oil:</strong> {item.remainingOil ?? 0} L</p>
+  </>
+)}
+
+{/* 🔥 VEHICLE FIELD */}
+{item.type === 'Vehicle' && (
+  <p><strong>📊 Current Reading:</strong> {item.currentReading} km</p>
+)}
+
               <p><strong>👨‍✈️ Driver:</strong> {item.driverName}</p>
               {/* 👈 NEW Ownership Field Display */}
               <p><strong>🏢 Ownership:</strong> {getOwnershipText(item.ownership)}</p>
               <p className="status-row">
-  <strong className="label">⚙️ Status:</strong>
-  <span className={`status ${item.status.toLowerCase()}`}>{item.status}</span>
-</p>
+                <strong className="label">⚙️ Status:</strong>
+                <span className={`status ${item.status.toLowerCase()}`}>{item.status}</span>
+              </p>
 
 
               <div className="card-actions">
-                <button 
-                  className="edit-btn" 
+                <button
+                  className="edit-btn"
                   onClick={() => handleEdit(item)}
                   disabled={loading}
                 >
                   <FaEdit /> Edit
                 </button>
-                <button 
-                  className="delete-btn" 
+                <button
+                  className="delete-btn"
                   onClick={() => handleDelete(item.id)}
                   disabled={loading}
                 >

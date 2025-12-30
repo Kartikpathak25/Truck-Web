@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { doc, updateDoc, getDocs, collection } from 'firebase/firestore';
+import {
+  doc,
+  updateDoc,
+  getDocs,
+  collection,
+  query,
+  where
+} from 'firebase/firestore';
 import { db } from '../../../../../firebase';
 import './EditTruck.css';
 
@@ -8,41 +15,38 @@ export default function EditTruck({
   onClose,
   onUpdate,
   sourceCollection,
-  loading = false,          // optional prop from parent (for global loading)
+  loading = false
 }) {
+
   const [formData, setFormData] = useState({
     type: 'Vehicle',
     truckNumber: '',
     model: '',
     location: '',
     capacity: '',
+    remainingOil: '',      // ✅ TANKER FIELD
+    currentReading: '',    // ✅ VEHICLE FIELD
     driverName: '',
-    currentReading: '',
     status: 'Active',
-    ownership: '',          // 👈 new field to match AddTruck / dashboard
+    ownership: '',
   });
 
   const [locations, setLocations] = useState([]);
   const [isUpdating, setIsUpdating] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Fetch locations from cities collection
+  // ================= FETCH ACTIVE LOCATIONS =================
   useEffect(() => {
     const fetchLocations = async () => {
-      try {
-        const snapshot = await getDocs(collection(db, 'cities'));
-        const locs = snapshot.docs
-          .map((d) => d.data().name)
-          .filter(Boolean);
-        setLocations(locs);
-      } catch (error) {
-        console.error('Error fetching locations:', error);
-      }
+      const q = query(collection(db, 'cities'), where('status', '==', 'active'));
+      const snapshot = await getDocs(q);
+      const locs = snapshot.docs.map(d => d.data().name).filter(Boolean);
+      setLocations(locs);
     };
     fetchLocations();
   }, []);
 
-  // Pre-fill form with initialData
+  // ================= PREFILL =================
   useEffect(() => {
     if (initialData) {
       setFormData({
@@ -51,94 +55,99 @@ export default function EditTruck({
         model: initialData.model || '',
         location: initialData.location || '',
         capacity: initialData.capacity || '',
-        driverName: initialData.driverName || '',
+        remainingOil: initialData.remainingOil || '',
         currentReading: initialData.currentReading || '',
+        driverName: initialData.driverName || '',
         status: initialData.status || 'Active',
-        ownership: initialData.ownership || '',   // 👈 keep existing ownership
+        ownership: initialData.ownership || '',
       });
     }
   }, [initialData]);
 
+  // ================= HANDLE CHANGE =================
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    // 🧠 Type change cleanup (same as Add form)
+    if (name === 'type') {
+      setFormData(prev => ({
+        ...prev,
+        type: value,
+        capacity: value === 'Tanker' ? prev.capacity : '',
+        remainingOil: value === 'Tanker' ? prev.remainingOil : '',
+        currentReading: value === 'Vehicle' ? prev.currentReading : '',
+      }));
+      return;
+    }
+
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  // ================= UPDATE =================
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (isUpdating || loading) return;
 
-    setErrorMsg('');
     setIsUpdating(true);
+    setErrorMsg('');
 
     try {
-      // Keep document in original collection
       const collectionName =
         sourceCollection ??
-        (initialData?.type === 'Tanker' ? 'tankers' : 'trucks');
+        (formData.type === 'Tanker' ? 'tankers' : 'trucks');
 
       const ref = doc(db, collectionName, initialData.id);
 
-      await updateDoc(ref, {
-        type: formData.type,
-        truckNumber: formData.truckNumber,
-        model: formData.model,
-        location: formData.location,
-        capacity: formData.capacity,
-        driverName: formData.driverName,
-        currentReading: formData.currentReading,
-        status: formData.status,
-        ownership: formData.ownership,          // 👈 update ownership too
-      });
+      const cleanData = { ...formData };
 
-      if (onUpdate) onUpdate({ id: initialData.id, ...formData });
+      // 🔒 CLEANUP (same as AddTruck)
+      if (formData.type === 'Vehicle') {
+        delete cleanData.capacity;
+        delete cleanData.remainingOil;
+      }
+
+      if (formData.type === 'Tanker') {
+        delete cleanData.currentReading;
+      }
+
+      await updateDoc(ref, cleanData);
+
+      onUpdate && onUpdate({ id: initialData.id, ...cleanData });
       onClose();
-    } catch (error) {
-      console.error('❌ Error updating truck:', error);
+    } catch (err) {
+      console.error(err);
       setErrorMsg('Update failed. Please try again.');
     } finally {
       setIsUpdating(false);
     }
   };
 
-  // Dynamic ownership labels like AddTruck
+  const disabledAll = isUpdating || loading;
+
+  // ================= LABELS =================
   const ownershipLabel =
     formData.type === 'Tanker'
       ? 'Ownership (Own Tanker / External Tanker)'
       : 'Ownership (Own Vehicle / External Vehicle)';
 
-  const ownOptionText =
-    formData.type === 'Tanker' ? 'Own Tanker' : 'Own Vehicle';
+  const ownText = formData.type === 'Tanker' ? 'Own Tanker' : 'Own Vehicle';
+  const extText = formData.type === 'Tanker' ? 'External Tanker' : 'External Vehicle';
 
-  const externalOptionText =
-    formData.type === 'Tanker' ? 'External Tanker' : 'External Vehicle';
-
-  const disabledAll = isUpdating || loading;
-
+  // ================= JSX =================
   return (
     <div className="edit-truck-form-container">
       <h2>Edit {formData.type}</h2>
 
       {errorMsg && <div className="form-error">{errorMsg}</div>}
 
-      <form onSubmit={handleSubmit} aria-busy={disabledAll}>
-        {/* Type (optional visual change only) */}
-        <select
-          name="type"
-          value={formData.type}
-          onChange={handleChange}
-          disabled={disabledAll}
-        >
+      <form onSubmit={handleSubmit}>
+
+        <select name="type" value={formData.type} onChange={handleChange} disabled={disabledAll}>
           <option value="Vehicle">Vehicle</option>
           <option value="Tanker">Tanker</option>
         </select>
 
-        {/* Truck number (read-only) */}
-        <input
-          type="text"
-          value={formData.truckNumber}
-          disabled
-        />
+        <input type="text" value={formData.truckNumber} disabled />
 
         <input
           type="text"
@@ -159,21 +168,47 @@ export default function EditTruck({
         >
           <option value="">Select Location</option>
           {locations.map((loc, i) => (
-            <option key={i} value={loc}>
-              {loc}
-            </option>
+            <option key={i} value={loc}>{loc}</option>
           ))}
         </select>
 
-        <input
-          type="text"
-          name="capacity"
-          placeholder="Capacity"
-          value={formData.capacity}
-          onChange={handleChange}
-          required
-          disabled={disabledAll}
-        />
+        {/* ========= TANKER ONLY ========= */}
+        {formData.type === 'Tanker' && (
+          <>
+            <input
+              type="number"
+              name="capacity"
+              placeholder="Capacity (L)"
+              value={formData.capacity}
+              onChange={handleChange}
+              required
+              disabled={disabledAll}
+            />
+
+            <input
+              type="number"
+              name="remainingOil"
+              placeholder="Remaining Oil (L)"
+              value={formData.remainingOil}
+              onChange={handleChange}
+              required
+              disabled={disabledAll}
+            />
+          </>
+        )}
+
+        {/* ========= VEHICLE ONLY ========= */}
+        {formData.type === 'Vehicle' && (
+          <input
+            type="number"
+            name="currentReading"
+            placeholder="Current Reading (km)"
+            value={formData.currentReading}
+            onChange={handleChange}
+            required
+            disabled={disabledAll}
+          />
+        )}
 
         <input
           type="text"
@@ -185,17 +220,6 @@ export default function EditTruck({
           disabled={disabledAll}
         />
 
-        <input
-          type="number"
-          name="currentReading"
-          placeholder="Current Reading (km)"
-          value={formData.currentReading}
-          onChange={handleChange}
-          required
-          disabled={disabledAll}
-        />
-
-        {/* Ownership dropdown (same pattern as AddTruck) */}
         <select
           name="ownership"
           value={formData.ownership}
@@ -204,37 +228,24 @@ export default function EditTruck({
           disabled={disabledAll}
         >
           <option value="">{ownershipLabel}</option>
-          <option value="own">{ownOptionText}</option>
-          <option value="external">{externalOptionText}</option>
+          <option value="own">{ownText}</option>
+          <option value="external">{extText}</option>
         </select>
 
-        <select
-          name="status"
-          value={formData.status}
-          onChange={handleChange}
-          disabled={disabledAll}
-        >
+        <select name="status" value={formData.status} onChange={handleChange} disabled={disabledAll}>
           <option value="Active">Active</option>
           <option value="Maintenance">Maintenance</option>
         </select>
 
         <div className="form-buttons">
-          <button
-            type="submit"
-            className={`submit-btn ${disabledAll ? 'loading' : ''}`}
-            disabled={disabledAll}
-          >
-            {disabledAll ? 'Updating…' : 'Update'}
+          <button type="submit" className="submit-btn" disabled={disabledAll}>
+            {disabledAll ? 'Updating...' : 'Update'}
           </button>
-          <button
-            type="button"
-            className="cancel-btn"
-            onClick={onClose}
-            disabled={disabledAll}
-          >
+          <button type="button" className="cancel-btn" onClick={onClose} disabled={disabledAll}>
             Cancel
           </button>
         </div>
+
       </form>
     </div>
   );
