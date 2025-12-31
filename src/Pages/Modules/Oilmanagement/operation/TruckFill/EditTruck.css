@@ -100,3 +100,29 @@
     width: 100%;
   }
 }
+.edit-status-bar {
+  background: #e8f5e8;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 16px;
+}
+
+.auto-field {
+  background: #f0f8ff !important;
+  font-weight: bold;
+  color: #0066cc;
+}
+
+.final-oil-field {
+  background: #fff3cd !important;
+  border: 2px solid #ffc107;
+}
+
+.form-row-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+

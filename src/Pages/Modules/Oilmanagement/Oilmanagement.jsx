@@ -4,9 +4,10 @@ import TankerFill from "../../../Pages/Modules/Oilmanagement/operation/TankerFil
 import TruckFill from "../../../Pages/Modules/Oilmanagement/operation/TruckFill/TruckFill";
 import "./Oilmanagement.css";
 
-
 export default function Oilmanagement() {
   const [activeForm, setActiveForm] = useState(null);
+
+  const closeModal = () => setActiveForm(null);
 
   return (
     <div className="oil-dashboard">
@@ -18,32 +19,38 @@ export default function Oilmanagement() {
         {/* Action Buttons */}
         <div className="action-buttons">
           <button onClick={() => setActiveForm("tanker")}>
-            🚚  Filled Tanker :
+            🚚 Fill Tanker
           </button>
           <button onClick={() => setActiveForm("truck")}>
-            🛢️ Filled Truck :
+            🛢️ Fill Truck
           </button>
         </div>
 
-        {/* Show Form in Modal */}
+        {/* ================= MODAL ================= */}
         {activeForm && (
-          <div className="modal-overlay">
-            <div className="modal-content">
+          <div className="modal-overlay" onClick={closeModal}>
+            <div
+              className="modal-content"
+              onClick={(e) => e.stopPropagation()}
+            >
               {activeForm === "tanker" && (
-                <TankerFill onClose={() => setActiveForm(null)} />
+                <TankerFill onClose={closeModal} />
               )}
-             {activeForm === "truck" && (
-  <TruckFill onClose={() => setActiveForm(null)} />
-)}
 
+              {activeForm === "truck" && (
+                <TruckFill onClose={closeModal} />
+              )}
             </div>
           </div>
         )}
 
-        {/* Records Section */}
+        {/* ================= RECORDS ================= */}
         <div className="records-section">
-          <TankerFill showRecordsOnly={true} />
-          <TruckFill showRecordsOnly={true} />
+          <h3>📋 Tanker Records</h3>
+          <TankerFill showRecordsOnly />
+
+          <h3>📋 Truck Records</h3>
+          <TruckFill showRecordsOnly />
         </div>
       </div>
     </div>
