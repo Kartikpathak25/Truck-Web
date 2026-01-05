@@ -23,8 +23,12 @@ export default function TankerFill({ onClose, showRecordsOnly = false }) {
   // ✅ Assigned tanker (login) - read only
   const [tankerId, setTankerId] = useState("");
 
-  // ✅ Truck selected from dropdown
+  // ✅ Selected vehicle/truck
   const [selectedTruckId, setSelectedTruckId] = useState("");
+
+  // ✅ Readings
+  const [previousReading, setPreviousReading] = useState("");
+  const [currentReading, setCurrentReading] = useState("");
 
   // ✅ Oil states
   const [totalPumpOil, setTotalPumpOil] = useState("");
@@ -45,8 +49,11 @@ export default function TankerFill({ onClose, showRecordsOnly = false }) {
 
   const [isLoadingUserVehicle, setIsLoadingUserVehicle] = useState(true);
 
-  // ✅ Keep tanker docId so we can update remainingOil after every operation
+  // ✅ tanker doc id (tankers collection)
   const [tankerDocId, setTankerDocId] = useState("");
+
+  // ✅ selected vehicle doc id (trucks collection) for updating reading
+  const [selectedTruckDocId, setSelectedTruckDocId] = useState("");
 
   const loggedUser = useMemo(() => {
     const stored = localStorage.getItem("loggedUser");
@@ -58,17 +65,13 @@ export default function TankerFill({ onClose, showRecordsOnly = false }) {
     }
   }, []);
 
-  // ✅ 1) Get assigned tankerId from user object (your real fields)
   const getAssignedTankerIdFromUser = (user) => {
     if (!user) return "";
-    // Screenshot field:
-    // assignedType: "Tanker", assignedTruckNumber: "BR01AP2051"
     if (user.assignedTruckNumber) return String(user.assignedTruckNumber);
-
     return String(user.tankerId || user.tankerNumber || user.assignedTanker || "");
   };
 
-  // ✅ 2) Fetch tanker current oil from tankers collection (UPDATED by TruckFill)
+  // ✅ Fetch tanker oil from tankers collection
   const loadTankerCurrentOilFromFleet = async (currentTankerId) => {
     if (!currentTankerId) return;
 
@@ -86,28 +89,18 @@ export default function TankerFill({ onClose, showRecordsOnly = false }) {
       setTankerDocId(tankerDoc.id);
 
       const fleetRemaining = Number(tanker.remainingOil ?? 0);
-      const fleetCapacity = Number(tanker.capacity ?? 0);
-
-      // ✅ Total Pump Oil = current remaining oil in tanker (latest pump fill result)
       setTotalPumpOil(fleetRemaining ? String(fleetRemaining) : "");
       setRemainingOil(fleetRemaining ? String(fleetRemaining) : "");
 
-      // Optional auto fields
       setSource((prev) => prev || tanker.location || "");
       setDriverName((prev) => prev || tanker.driverName || "");
-
-      // If tanker has 0 remaining but capacity exists, keep capacity in placeholder sense
-      if (!fleetRemaining && fleetCapacity && !totalPumpOil) {
-        // no hard set, because you want remaining as truth
-      }
       return;
     }
 
-    // fallback if tanker not found in tankers collection
     setTankerDocId("");
   };
 
-  // ✅ 3) fallback: If tankers doc not found, load last operation from tankerFillOperations (desc + limit)
+  // ✅ fallback: last tankerFillOperations record (if tankers doc missing)
   const loadLastOperationFallback = async (currentTankerId) => {
     if (!currentTankerId) return;
 
@@ -127,48 +120,77 @@ export default function TankerFill({ onClose, showRecordsOnly = false }) {
     }
   };
 
-  // ✅ Load user tankerId + user defaults
+  // ✅ Fetch selected vehicle reading from trucks collection
+  const loadVehicleReading = async (vehicleNumber) => {
+    setSelectedTruckDocId("");
+    setPreviousReading("");
+    setCurrentReading("");
+
+    if (!vehicleNumber) return;
+
+    const vq = query(
+      collection(db, "trucks"),
+      where("truckNumber", "==", vehicleNumber),
+      limit(1)
+    );
+    const snap = await getDocs(vq);
+
+    if (!snap.empty) {
+      const vDoc = snap.docs[0];
+      const vData = vDoc.data();
+
+      setSelectedTruckDocId(vDoc.id);
+
+      const prev = Number(vData.currentReading ?? 0);
+      setPreviousReading(String(prev));
+      setCurrentReading(""); // manual fill
+
+      // auto fields from selected vehicle (optional)
+      setSource(vData.location || source || "");
+      setDriverName(vData.driverName || driverName || "");
+    } else {
+      // If truck doc not found
+      setPreviousReading("0");
+      setCurrentReading("");
+    }
+  };
+
+  // ✅ Load user tankerId + defaults
   useEffect(() => {
     const run = async () => {
       try {
         setIsLoadingUserVehicle(true);
-
         if (!loggedUser) return;
 
         const assignedTanker = getAssignedTankerIdFromUser(loggedUser);
         if (assignedTanker) setTankerId(assignedTanker);
 
-        // defaults from logged user
         if (loggedUser.location) setSource(String(loggedUser.location));
         if (loggedUser.driverName) setDriverName(String(loggedUser.driverName));
       } finally {
         setIsLoadingUserVehicle(false);
       }
     };
-
     run();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ✅ When tankerId is ready -> load current oil from tankers
+  // ✅ load tanker oil when tankerId is ready
   useEffect(() => {
     const run = async () => {
       if (!tankerId) return;
 
       await loadTankerCurrentOilFromFleet(tankerId);
 
-      // If tankers doc not found or remaining still empty, use fallback
-      // (Order/limit pattern supported with orderBy + limit) [web:55]
       if (!tankerDocId) {
         await loadLastOperationFallback(tankerId);
       }
     };
-
     run();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tankerId]);
 
-  // ✅ Fetch trucks for dropdown
+  // ✅ Fetch vehicles for dropdown
   useEffect(() => {
     const fetchTrucks = async () => {
       try {
@@ -215,72 +237,18 @@ export default function TankerFill({ onClose, showRecordsOnly = false }) {
     setFilledOil("");
     setDateTime("");
     setShowOverfillPopup(false);
+    setCurrentReading(""); // keep previousReading as-is
   };
 
-  // ✅ Print
-  const handlePrintSingleRecord = (record) => {
-    const docPdf = new jsPDF("p", "mm", "a4");
-    docPdf.setFontSize(20);
-    docPdf.setFont("helvetica", "bold");
-    docPdf.text("Tanker Fill Record", 20, 25);
+  // ✅ Vehicle select
+  const handleTruckSelect = async (truckNumber) => {
+    setSelectedTruckId(truckNumber);
 
-    docPdf.setFontSize(12);
-    docPdf.setFont("helvetica", "normal");
+    // fetch selected vehicle currentReading -> previousReading
+    await loadVehicleReading(truckNumber);
 
-    const details = [
-      ["Tanker ID:", record.tankerId || "N/A"],
-      ["Truck ID:", record.truckId || "N/A"],
-      ["Total Pump Oil:", `${record.totalPumpOil || 0} L`],
-      ["Filled Oil:", `${record.filledOil || 0} L`],
-      ["Remaining Oil:", `${record.remainingOil || 0} L`],
-      ["Location:", record.source || "N/A"],
-      ["Date & Time:", record.dateTime || "N/A"],
-      ["Driver Name:", record.driverName || "N/A"],
-    ];
-
-    let yPosition = 45;
-    details.forEach(([label, value]) => {
-      docPdf.text(label, 20, yPosition);
-      docPdf.text(value, 80, yPosition);
-      yPosition += 8;
-    });
-
-    docPdf.save(
-      `tanker-record-${record.tankerId || "single"}-${Date.now()}.pdf`
-    );
-  };
-
-  const handlePrintAllRecords = () => {
-    const docPdf = new jsPDF("p", "mm", "a4");
-    autoTable(docPdf, {
-      startY: 30,
-      head: [
-        [
-          "Tanker ID",
-          "Truck ID",
-          "Total Pump Oil",
-          "Filled Oil",
-          "Remaining Oil",
-          "Location",
-          "Date & Time",
-          "Driver Name",
-        ],
-      ],
-      body: records.map((r) => [
-        r.tankerId || "",
-        r.truckId || "",
-        `${r.totalPumpOil || 0} L`,
-        `${r.filledOil || 0} L`,
-        `${r.remainingOil || 0} L`,
-        r.source || "",
-        r.dateTime || "",
-        r.driverName || "",
-      ]),
-      styles: { fontSize: 10, cellPadding: 2, valign: "middle", halign: "center" },
-      headStyles: { fillColor: [52, 152, 219], textColor: 255, fontStyle: "bold" },
-      margin: { top: 30 },
-    });
-    docPdf.save("tanker-fill-records.pdf");
+    // reload tanker remaining oil (optional refresh)
+    if (tankerId) await loadTankerCurrentOilFromFleet(tankerId);
   };
 
   // ✅ Submit (Fill Truck from Tanker)
@@ -288,10 +256,17 @@ export default function TankerFill({ onClose, showRecordsOnly = false }) {
     e.preventDefault();
 
     if (!tankerId) return alert("Assigned Tanker ID missing.");
-    if (!selectedTruckId) return alert("Please select Truck ID.");
+    if (!selectedTruckId) return alert("Please select Vehicle ID.");
     if (!filledOil) return alert("Please enter Filled Oil.");
     if (!dateTime) return alert("Please select Date & Time.");
     if (!driverName) return alert("Driver name missing.");
+
+    // readings validation
+    const prevR = Number(previousReading || 0);
+    const currR = Number(currentReading || 0);
+
+    if (!currentReading) return alert("Please enter Current Reading.");
+    if (currR < prevR) return alert("Current reading cannot be less than Previous reading.");
 
     const currentFilled = Number(filledOil);
     const currentTotal = Number(totalPumpOil || 0);
@@ -312,26 +287,41 @@ export default function TankerFill({ onClose, showRecordsOnly = false }) {
       // ✅ Save operation record
       await addDoc(collection(db, "tankerFillOperations"), {
         tankerId,
-        truckId: selectedTruckId,
+        truckId: selectedTruckId, // (you can rename to vehicleId later if you want)
         totalPumpOil: currentTotal,
         filledOil: currentFilled,
         remainingOil: finalRemaining,
+        previousReading: prevR,
+        currentReading: currR,
         source,
         dateTime,
         driverName,
         createdAt: serverTimestamp(),
       });
 
-      // ✅ Update tanker remainingOil in fleet (single source of truth)
+      // ✅ Update tanker remainingOil
       if (tankerDocId) {
         await updateDoc(doc(db, "tankers", tankerDocId), {
           remainingOil: finalRemaining,
+          updatedAt: serverTimestamp(),
         });
       }
 
-      // ✅ Update UI
+      // ✅ Update selected vehicle reading so next time previousReading auto comes
+      if (selectedTruckDocId) {
+        await updateDoc(doc(db, "trucks", selectedTruckDocId), {
+          currentReading: currR,
+          updatedAt: serverTimestamp(),
+        });
+      }
+
+      // ✅ UI update
       setRemainingOil(String(finalRemaining));
       setTotalPumpOil(String(finalRemaining));
+
+      // after save: previousReading should become currentReading for next time
+      setPreviousReading(String(currR));
+      setCurrentReading("");
 
       resetForm();
       if (onClose) onClose();
@@ -339,6 +329,76 @@ export default function TankerFill({ onClose, showRecordsOnly = false }) {
       console.error("Error saving record:", error);
       alert("Failed to save record: " + error.message);
     }
+  };
+
+  // ✅ Print functions (same, but add readings in details)
+  const handlePrintSingleRecord = (record) => {
+    const docPdf = new jsPDF("p", "mm", "a4");
+    docPdf.setFontSize(20);
+    docPdf.setFont("helvetica", "bold");
+    docPdf.text("Tanker Fill Record", 20, 25);
+
+    docPdf.setFontSize(12);
+    docPdf.setFont("helvetica", "normal");
+
+    const details = [
+      ["Tanker ID:", record.tankerId || "N/A"],
+      ["Vehicle ID:", record.truckId || "N/A"],
+      ["Prev Reading:", String(record.previousReading ?? "0")],
+      ["Current Reading:", String(record.currentReading ?? "0")],
+      ["Total Pump Oil:", `${record.totalPumpOil || 0} L`],
+      ["Filled Oil:", `${record.filledOil || 0} L`],
+      ["Remaining Oil:", `${record.remainingOil || 0} L`],
+      ["Location:", record.source || "N/A"],
+      ["Date & Time:", record.dateTime || "N/A"],
+      ["Driver Name:", record.driverName || "N/A"],
+    ];
+
+    let yPosition = 45;
+    details.forEach(([label, value]) => {
+      docPdf.text(label, 20, yPosition);
+      docPdf.text(value, 80, yPosition);
+      yPosition += 8;
+    });
+
+    docPdf.save(`tanker-record-${record.tankerId || "single"}-${Date.now()}.pdf`);
+  };
+
+  const handlePrintAllRecords = () => {
+    const docPdf = new jsPDF("p", "mm", "a4");
+    autoTable(docPdf, {
+      startY: 30,
+      head: [
+        [
+          "Tanker ID",
+          "Vehicle ID",
+          "Prev",
+          "Current",
+          "Total",
+          "Filled",
+          "Remaining",
+          "Location",
+          "Date & Time",
+          "Driver",
+        ],
+      ],
+      body: records.map((r) => [
+        r.tankerId || "",
+        r.truckId || "",
+        r.previousReading ?? 0,
+        r.currentReading ?? 0,
+        `${r.totalPumpOil || 0}`,
+        `${r.filledOil || 0}`,
+        `${r.remainingOil || 0}`,
+        r.source || "",
+        r.dateTime || "",
+        r.driverName || "",
+      ]),
+      styles: { fontSize: 9, cellPadding: 2, valign: "middle", halign: "center" },
+      headStyles: { fillColor: [52, 152, 219], textColor: 255, fontStyle: "bold" },
+      margin: { top: 30 },
+    });
+    docPdf.save("tanker-fill-records.pdf");
   };
 
   const handleCancel = () => {
@@ -353,20 +413,6 @@ export default function TankerFill({ onClose, showRecordsOnly = false }) {
       console.error("Error deleting record:", error);
       alert("Failed to delete record.");
     }
-  };
-
-  const handleTruckSelect = async (truckNumber) => {
-    setSelectedTruckId(truckNumber);
-
-    const selectedTruck = activeTankerOptions.find((t) => t.truckNumber === truckNumber);
-    if (selectedTruck) {
-      setSource(selectedTruck.location || source || "");
-      setDriverName(selectedTruck.driverName || driverName || "");
-    }
-
-    // ✅ When truck changes, tanker oil should remain tanker-based
-    // reload from tankers (latest)
-    if (tankerId) await loadTankerCurrentOilFromFleet(tankerId);
   };
 
   return (
@@ -386,19 +432,31 @@ export default function TankerFill({ onClose, showRecordsOnly = false }) {
                   <label>Tanker ID (Assigned):</label>
                   <input type="text" value={tankerId} readOnly />
 
-                  <label>Truck ID:</label>
+                  <label>Vehicle ID:</label>
                   <select
                     value={selectedTruckId}
                     onChange={(e) => handleTruckSelect(e.target.value)}
                     required
                   >
-                    <option value="">Select Active Truck</option>
+                    <option value="">Select Active Vehicle</option>
                     {activeTankerOptions.map((truck) => (
                       <option key={truck.id} value={truck.truckNumber}>
                         {truck.truckNumber}
                       </option>
                     ))}
                   </select>
+
+                  <label>Previous Reading:</label>
+                  <input type="number" value={previousReading} readOnly />
+
+                  <label>Current Reading:</label>
+                  <input
+                    type="number"
+                    value={currentReading}
+                    onChange={(e) => setCurrentReading(e.target.value)}
+                    required
+                    min="0"
+                  />
 
                   <label>Total Pump Oil (L):</label>
                   <input type="number" value={totalPumpOil} readOnly />
@@ -440,8 +498,8 @@ export default function TankerFill({ onClose, showRecordsOnly = false }) {
 
               {tankerOptions.length > activeTankerOptions.length && (
                 <div className="maintenance-warning">
-                  ℹ️ {tankerOptions.length - activeTankerOptions.length} vehicles
-                  in maintenance (hidden).
+                  ℹ️ {tankerOptions.length - activeTankerOptions.length} vehicles in
+                  maintenance (hidden).
                 </div>
               )}
             </>
@@ -458,9 +516,7 @@ export default function TankerFill({ onClose, showRecordsOnly = false }) {
               <strong>{totalPumpOil}L</strong>).
             </p>
             <div className="popup-actions">
-              <button onClick={() => setShowOverfillPopup(false)}>
-                OK, I'll Fix
-              </button>
+              <button onClick={() => setShowOverfillPopup(false)}>OK, I'll Fix</button>
             </div>
           </div>
         </div>
@@ -478,7 +534,9 @@ export default function TankerFill({ onClose, showRecordsOnly = false }) {
           <thead>
             <tr>
               <th>Tanker ID</th>
-              <th>Truck ID</th>
+              <th>Vehicle ID</th>
+              <th>Prev</th>
+              <th>Current</th>
               <th>Total (L)</th>
               <th>Filled (L)</th>
               <th>Remaining (L)</th>
@@ -493,6 +551,8 @@ export default function TankerFill({ onClose, showRecordsOnly = false }) {
               <tr key={item.id}>
                 <td>{item.tankerId}</td>
                 <td>{item.truckId || "-"}</td>
+                <td>{item.previousReading ?? 0}</td>
+                <td>{item.currentReading ?? 0}</td>
                 <td>{item.totalPumpOil}</td>
                 <td>{item.filledOil}</td>
                 <td>{item.remainingOil}</td>
@@ -500,15 +560,9 @@ export default function TankerFill({ onClose, showRecordsOnly = false }) {
                 <td>{item.dateTime}</td>
                 <td>{item.driverName}</td>
                 <td>
-                  <button onClick={() => handlePrintSingleRecord(item)} title="Print">
-                    🖨️
-                  </button>
-                  <button onClick={() => setEditRecord(item)} title="Edit">
-                    ✏️
-                  </button>
-                  <button onClick={() => handleDelete(item.id)} title="Delete">
-                    🗑️
-                  </button>
+                  <button onClick={() => handlePrintSingleRecord(item)} title="Print">🖨️</button>
+                  <button onClick={() => setEditRecord(item)} title="Edit">✏️</button>
+                  <button onClick={() => handleDelete(item.id)} title="Delete">🗑️</button>
                 </td>
               </tr>
             ))}
