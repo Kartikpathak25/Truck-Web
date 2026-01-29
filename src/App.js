@@ -10,6 +10,7 @@ import TankerDashboard from './Dashboard/Tankerdashboard/TankerDashboard.jsx';
 import Maintanance from './Pages/Modules/Maintananace/Maintanance.jsx';
 import Oilmanagement2 from './Dashboard/Tankerdashboard/Module2/Oilmanagement2.jsx';
 import Maintanance2 from './Dashboard/Tankerdashboard/Module2/Maintanance2.jsx';
+import Report from './Pages/Modules/Reportdashboard/Report.jsx';
 
 function App() {
   return (
@@ -25,13 +26,14 @@ function App() {
         <Route path="/users" element={<UserManagement />} />
         <Route path="/oil" element={<Oilmanagement />} />
         <Route path="/maintenance" element={<Maintanance />} />
+        <Route path='/reports' element={<Report />} />
 
         {/* ✅ Tanker Dashboard */}
-<Route path="/tanker-dashboard" element={<TankerDashboard />} />
+        <Route path="/tanker-dashboard" element={<TankerDashboard />} />
 
-{/* ✅ Tanker pages as top-level routes */}
-       <Route path="/tankeroil" element={<Oilmanagement2 />} />
-          <Route path="/tankermaintenance" element={<Maintanance2/>} />
+        {/* ✅ Tanker pages as top-level routes */}
+        <Route path="/tankeroil" element={<Oilmanagement2 />} />
+        <Route path="/tankermaintenance" element={<Maintanance2 />} />
         {/* 🔹 Catch-all → redirect to login */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

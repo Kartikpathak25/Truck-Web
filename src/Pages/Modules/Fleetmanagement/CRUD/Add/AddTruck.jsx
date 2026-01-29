@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './AddTruck.css';
-
 import { db } from "../../../../../firebase";
-
 import {
   collection,
   addDoc,
@@ -12,50 +10,40 @@ import {
 } from 'firebase/firestore';
 
 export default function AddTruck({ onClose, onAdd, loading = false }) {
-
-  // 🔹 formData me remainingOil ADD
-const [formData, setFormData] = useState({
-  type: 'Vehicle',
-  truckNumber: '',
-  model: '',
-  location: '',
-  capacity: '',        // ✅ tanker
-  remainingOil: '',    // ✅ tanker (MANUAL ENTRY)
-  currentReading: '',  // vehicle
-  driverName: '',
-  status: 'Active',
-  ownership: ''
-});
+  const [formData, setFormData] = useState({
+    type: 'Vehicle',
+    truckNumber: '',
+    model: '',
+    location: '',
+    capacity: '',
+    remainingOil: '',
+    currentReading: '',
+    driverName: '',
+    status: 'Active',
+    ownership: ''
+  });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [locations, setLocations] = useState([]);
   const [duplicateError, setDuplicateError] = useState('');
   const [showDuplicateCheck, setShowDuplicateCheck] = useState(false);
 
-  // ================= FETCH ONLY ACTIVE LOCATIONS =================
+  // 🔹 Fetch active cities
   useEffect(() => {
     const fetchLocations = async () => {
       try {
-        const q = query(
-          collection(db, "cities"),
-          where("status", "==", "active")
-        );
-
+        const q = query(collection(db, "cities"), where("status", "==", "active"));
         const snapshot = await getDocs(q);
-        const locs = snapshot.docs
-          .map(doc => doc.data().name)
-          .filter(Boolean);
-
+        const locs = snapshot.docs.map(doc => doc.data().name).filter(Boolean);
         setLocations(locs);
       } catch (error) {
         console.error("Error fetching active locations:", error);
       }
     };
-
     fetchLocations();
   }, []);
 
-  // ================= DUPLICATE CHECK =================
+  // 🔍 Check for duplicate truckNumber
   const checkDuplicateRealTime = async (truckNumber, type) => {
     if (!truckNumber || truckNumber.length < 3) {
       setDuplicateError('');
@@ -66,18 +54,11 @@ const [formData, setFormData] = useState({
     try {
       setShowDuplicateCheck(true);
       const collectionName = type === 'Tanker' ? 'tankers' : 'trucks';
-
-      const q = query(
-        collection(db, collectionName),
-        where('truckNumber', '==', truckNumber)
-      );
-
+      const q = query(collection(db, collectionName), where('truckNumber', '==', truckNumber));
       const querySnapshot = await getDocs(q);
 
       setDuplicateError(
-        querySnapshot.empty
-          ? ''
-          : `⚠️ Truck Number "${truckNumber}" already exists!`
+        querySnapshot.empty ? '' : `⚠️ Truck Number "${truckNumber}" already exists!`
       );
     } catch (error) {
       console.error('Duplicate check error:', error);
@@ -86,7 +67,7 @@ const [formData, setFormData] = useState({
     }
   };
 
-  // ================= HANDLE CHANGE =================
+  // 🔄 Handle input changes
   const handleChange = async (e) => {
     const { name, value } = e.target;
 
@@ -100,7 +81,6 @@ const [formData, setFormData] = useState({
         remainingOil: value === 'Tanker' ? prev.remainingOil : '',
         currentReading: value === 'Vehicle' ? prev.currentReading : ''
       }));
-
       if (formData.truckNumber) {
         await checkDuplicateRealTime(formData.truckNumber, value);
       }
@@ -118,10 +98,9 @@ const [formData, setFormData] = useState({
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // ================= HANDLE SUBMIT =================
+  // ✅ Submit form
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (duplicateError || isSubmitting || loading) return;
 
     setIsSubmitting(true);
@@ -129,19 +108,18 @@ const [formData, setFormData] = useState({
     try {
       const cleanData = { ...formData };
 
-      // 🔒 VEHICLE CLEANUP
       if (formData.type === 'Vehicle') {
-  delete cleanData.capacity;
-  delete cleanData.remainingOil;
-}
+        delete cleanData.capacity;
+        delete cleanData.remainingOil;
+        cleanData.vehicleId = formData.truckNumber; // ✅ Add vehicleId
+      }
 
-if (formData.type === 'Tanker') {
-  delete cleanData.currentReading;
-}
+      if (formData.type === 'Tanker') {
+        delete cleanData.currentReading;
+        cleanData.tankerId = formData.truckNumber; // ✅ Add tankerId
+      }
 
-
-      const collectionName =
-        formData.type === 'Tanker' ? 'tankers' : 'trucks';
+      const collectionName = formData.type === 'Tanker' ? 'tankers' : 'trucks';
 
       if (onAdd) {
         await onAdd(cleanData);
@@ -159,7 +137,7 @@ if (formData.type === 'Tanker') {
     }
   };
 
-  // ================= RESET =================
+  // 🔄 Reset form
   const resetForm = () => {
     setFormData({
       type: 'Vehicle',
@@ -176,29 +154,23 @@ if (formData.type === 'Tanker') {
     setDuplicateError('');
   };
 
-  // ================= DYNAMIC LABELS =================
+  // 🏷️ Dynamic labels
   const ownershipLabel =
     formData.type === 'Tanker'
       ? 'Ownership (Own Tanker / External Tanker)'
       : 'Ownership (Own Vehicle / External Vehicle)';
 
-  const ownOptionText =
-    formData.type === 'Tanker' ? 'Own Tanker' : 'Own Vehicle';
+  const ownOptionText = formData.type === 'Tanker' ? 'Own Tanker' : 'Own Vehicle';
+  const externalOptionText = formData.type === 'Tanker' ? 'External Tanker' : 'External Vehicle';
 
-  const externalOptionText =
-    formData.type === 'Tanker' ? 'External Tanker' : 'External Vehicle';
-
-  // ================= JSX =================
+  // 🧩 JSX
   return (
     <div className="add-truck-form-container">
       <h2>Add New Vehicle or Tanker</h2>
 
-      {duplicateError && (
-        <div className="duplicate-error">{duplicateError}</div>
-      )}
+      {duplicateError && <div className="duplicate-error">{duplicateError}</div>}
 
       <form onSubmit={handleSubmit}>
-
         <select name="type" value={formData.type} onChange={handleChange}>
           <option value="Vehicle">Vehicle</option>
           <option value="Tanker">Tanker</option>
@@ -238,30 +210,27 @@ if (formData.type === 'Tanker') {
           ))}
         </select>
 
-        {/* ================= TANKER FIELDS ================= */}
         {formData.type === 'Tanker' && (
-  <>
-    <input
-      type="number"
-      name="capacity"
-      placeholder="Capacity (L) *"
-      value={formData.capacity}
-      onChange={handleChange}
-      required
-    />
+          <>
+            <input
+              type="number"
+              name="capacity"
+              placeholder="Capacity (L) *"
+              value={formData.capacity}
+              onChange={handleChange}
+              required
+            />
+            <input
+              type="number"
+              name="remainingOil"
+              placeholder="Initial Remaining Oil (L) *"
+              value={formData.remainingOil}
+              onChange={handleChange}
+              required
+            />
+          </>
+        )}
 
-    <input
-      type="number"
-      name="remainingOil"
-      placeholder="Initial Remaining Oil (L) *"
-      value={formData.remainingOil}
-      onChange={handleChange}
-      required
-    />
-  </>
-)}
-
-        {/* ================= VEHICLE FIELD ================= */}
         {formData.type === 'Vehicle' && (
           <input
             type="number"

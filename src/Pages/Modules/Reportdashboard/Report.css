@@ -1,0 +1,288 @@
+:root {
+    --primary: #007bff;
+    --danger: #dc3545;
+    --success: #28a745;
+    --bg-gradient: linear-gradient(135deg, #eef2f7, #dfe6ed);
+    --card-bg: rgba(255, 255, 255, 0.92);
+    --shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    --radius: 12px;
+}
+
+.report-container {
+    display: flex;
+    height: 100vh;
+    background: var(--bg-gradient);
+    font-family: "Segoe UI", Roboto, sans-serif;
+    color: #333;
+    overflow: hidden;
+}
+
+.report-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 2rem;
+    backdrop-filter: blur(12px);
+    overflow: hidden;
+}
+
+.results-table {
+    flex: 1;
+    overflow-y: auto;
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 1rem;
+    max-height: calc(100vh - 280px);
+    /* Adjust based on filter height */
+}
+
+.results-table table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: auto;
+    position: relative;
+}
+
+.results-table thead th {
+    position: sticky;
+    top: 0;
+    background: #f8f9fa;
+    z-index: 1;
+    padding: 1rem;
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid #ddd;
+}
+
+
+/* 🔹 Filter Form */
+.filter-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    background: var(--card-bg);
+    padding: 1rem;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    align-items: center;
+}
+
+.filter-form select,
+.filter-form input[type="date"],
+.filter-form button {
+    padding: 0.7rem 1rem;
+    font-size: 15px;
+    border-radius: var(--radius);
+    border: 1px solid #ccc;
+    background: #fff;
+    min-width: 180px;
+    flex: 1;
+    transition: all 0.3s ease;
+}
+
+.filter-form select:focus,
+.filter-form input[type="date"]:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+    outline: none;
+}
+
+.filter-form button {
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    min-width: 120px;
+    transition: all 0.3s ease;
+}
+
+.filter-form button:hover {
+    background: #0056b3;
+    transform: translateY(-2px);
+}
+
+.clear-btn {
+    background: var(--danger);
+}
+
+.clear-btn:hover {
+    background: #a71d2a;
+}
+
+/* 🔹 Results Table Container */
+.results-table {
+    flex: 1;
+    overflow-y: auto;
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 1rem;
+    max-height: calc(100vh - 250px);
+}
+
+/* 🔹 Table Styling */
+.results-table table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: auto;
+    position: relative;
+}
+
+.results-table thead th {
+    position: sticky;
+    top: 0;
+    background: #f8f9fa;
+    z-index: 1;
+    padding: 1rem;
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid #ddd;
+}
+
+.results-table td {
+    padding: 1rem;
+    font-size: 14px;
+    border-bottom: 1px solid #eee;
+    white-space: nowrap;
+}
+
+.results-table tr:hover {
+    background: rgba(0, 123, 255, 0.05);
+    transition: background 0.3s ease;
+}
+
+/* 🔹 Row Highlight by Type */
+.results-table tr td:first-child {
+    font-weight: 600;
+}
+
+.results-table tr td:first-child::before {
+    content: "• ";
+    color: var(--primary);
+}
+
+.results-table tr[data-type="Pump Fill"] {
+    background: rgba(40, 167, 69, 0.05);
+}
+
+.results-table tr[data-type="Tanker Fill"] {
+    background: rgba(255, 193, 7, 0.05);
+}
+
+/* 🔹 Pagination */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.pagination button {
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.pagination button:hover {
+    background: #0056b3;
+}
+
+.pagination span {
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+}
+
+/* 🔹 Responsive */
+@media (max-width: 768px) {
+    .filter-form {
+        flex-direction: column;
+    }
+
+    .filter-form select,
+    .filter-form input[type="date"],
+    .filter-form button {
+        width: 100%;
+    }
+
+    .results-table thead th,
+    .results-table td {
+        font-size: 13px;
+        padding: 0.75rem;
+    }
+
+    .results-table table {
+        display: block;
+        overflow-x: auto;
+    }
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    padding: 0.5rem;
+}
+
+.pagination button {
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.pagination button:hover:not(:disabled) {
+    background: #0056b3;
+    transform: translateY(-2px);
+}
+
+.pagination button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    color: #666;
+}
+
+.pagination .page-number {
+    background: #fff;
+    border: 1px solid #ddd;
+    padding: 0.5rem 0.9rem;
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.pagination .page-number:hover {
+    background: rgba(0, 123, 255, 0.1);
+    border-color: var(--primary);
+}
+
+.pagination .page-number.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+    font-weight: 600;
+}
