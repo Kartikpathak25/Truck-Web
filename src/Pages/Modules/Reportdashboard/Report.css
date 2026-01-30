@@ -26,38 +26,13 @@
     overflow: hidden;
 }
 
-.results-table {
-    flex: 1;
-    overflow-y: auto;
-    background: var(--card-bg);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    padding: 1rem;
-    max-height: calc(100vh - 280px);
-    /* Adjust based on filter height */
-}
-
-.results-table table {
-    width: 100%;
-    border-collapse: collapse;
-    table-layout: auto;
-    position: relative;
-}
-
-.results-table thead th {
-    position: sticky;
-    top: 0;
-    background: #f8f9fa;
-    z-index: 1;
-    padding: 1rem;
-    font-size: 14px;
-    font-weight: 600;
-    color: #333;
-    text-transform: uppercase;
+.report-content h2 {
+    margin-bottom: 1.5rem;
+    font-size: 30px;
+    font-weight: 700;
+    color: #222;
     letter-spacing: 0.5px;
-    border-bottom: 1px solid #ddd;
 }
-
 
 /* 🔹 Filter Form */
 .filter-form {
@@ -115,7 +90,7 @@
     background: #a71d2a;
 }
 
-/* 🔹 Results Table Container */
+/* 🔹 Scrollable Table Container */
 .results-table {
     flex: 1;
     overflow-y: auto;
@@ -123,7 +98,8 @@
     border-radius: var(--radius);
     box-shadow: var(--shadow);
     padding: 1rem;
-    max-height: calc(100vh - 250px);
+    max-height: calc(100vh - 280px);
+    /* Adjust based on header + filter height */
 }
 
 /* 🔹 Table Styling */
@@ -185,59 +161,6 @@
     align-items: center;
     gap: 0.75rem;
     margin-top: 1rem;
-}
-
-.pagination button {
-    background: var(--primary);
-    color: #fff;
-    border: none;
-    padding: 0.5rem 1rem;
-    font-weight: 500;
-    border-radius: var(--radius);
-    cursor: pointer;
-    transition: background 0.3s ease;
-}
-
-.pagination button:hover {
-    background: #0056b3;
-}
-
-.pagination span {
-    font-size: 14px;
-    font-weight: 500;
-    color: #333;
-}
-
-/* 🔹 Responsive */
-@media (max-width: 768px) {
-    .filter-form {
-        flex-direction: column;
-    }
-
-    .filter-form select,
-    .filter-form input[type="date"],
-    .filter-form button {
-        width: 100%;
-    }
-
-    .results-table thead th,
-    .results-table td {
-        font-size: 13px;
-        padding: 0.75rem;
-    }
-
-    .results-table table {
-        display: block;
-        overflow-x: auto;
-    }
-}
-
-.pagination {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 0.75rem;
-    margin-top: 1rem;
     padding: 0.5rem;
 }
 
@@ -285,4 +208,28 @@
     color: #fff;
     border-color: var(--primary);
     font-weight: 600;
+}
+
+/* 🔹 Responsive */
+@media (max-width: 768px) {
+    .filter-form {
+        flex-direction: column;
+    }
+
+    .filter-form select,
+    .filter-form input[type="date"],
+    .filter-form button {
+        width: 100%;
+    }
+
+    .results-table thead th,
+    .results-table td {
+        font-size: 13px;
+        padding: 0.75rem;
+    }
+
+    .results-table table {
+        display: block;
+        overflow-x: auto;
+    }
 }

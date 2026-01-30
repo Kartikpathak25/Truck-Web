@@ -43,6 +43,7 @@
   transition: transform 0.18s ease, box-shadow 0.18s ease;
   box-shadow: 0 6px 20px rgba(3, 88, 190, 0.12);
 }
+
 .add-btn:hover {
   transform: translateY(-3px);
   box-shadow: 0 10px 28px rgba(3, 88, 190, 0.16);
@@ -60,9 +61,10 @@
   box-shadow: 0 2px 6px rgba(24, 39, 66, 0.04);
   transition: border-color .18s ease, box-shadow .18s ease;
 }
+
 .search-bar:focus {
   border-color: #3b82f6;
-  box-shadow: 0 6px 18px rgba(59,130,246,0.08);
+  box-shadow: 0 6px 18px rgba(59, 130, 246, 0.08);
   outline: none;
 }
 
@@ -86,6 +88,7 @@
   box-shadow: 0 10px 40px rgba(13, 31, 63, 0.18);
   animation: fadeIn .28s ease;
 }
+
 .modal-form h3 {
   margin-bottom: 18px;
   color: #0962d1;
@@ -107,14 +110,19 @@
   background-color: #fcfdff;
   transition: border-color .14s ease, box-shadow .14s ease;
 }
+
 .modal-form input:focus,
 .modal-form textarea:focus,
 .modal-form select:focus {
   border-color: #2b7bf6;
-  box-shadow: 0 6px 18px rgba(43,123,246,0.08);
+  box-shadow: 0 6px 18px rgba(43, 123, 246, 0.08);
   outline: none;
 }
-.modal-form textarea { resize: vertical; min-height: 100px; }
+
+.modal-form textarea {
+  resize: vertical;
+  min-height: 100px;
+}
 
 /* Dropdown styling */
 .modal-form select {
@@ -122,6 +130,7 @@
   background-image: linear-gradient(180deg, #ffffff, #f9fbff);
   cursor: pointer;
 }
+
 .modal-form select option {
   padding: 8px;
 }
@@ -140,6 +149,7 @@
   gap: 12px;
   margin-top: 8px;
 }
+
 .form-actions button {
   padding: 10px 16px;
   font-size: 14px;
@@ -148,10 +158,12 @@
   cursor: pointer;
   transition: transform .14s ease;
 }
+
 .form-actions button[type="submit"] {
-  background: linear-gradient(180deg,#0b74ff 0%, #0056b3 100%);
+  background: linear-gradient(180deg, #0b74ff 0%, #0056b3 100%);
   color: #fff;
 }
+
 .cancel-btn {
   background: #6c757d;
   color: #fff;
@@ -177,9 +189,10 @@
   transition: transform .18s ease, box-shadow .18s ease;
   min-height: 220px;
 }
+
 .maintenance-card:hover {
   transform: translateY(-6px);
-  box-shadow: 0 12px 36px rgba(11,26,47,0.10);
+  box-shadow: 0 12px 36px rgba(11, 26, 47, 0.10);
 }
 
 /* Icon header */
@@ -187,13 +200,13 @@
   width: 56px;
   height: 56px;
   border-radius: 12px;
-  background: linear-gradient(135deg,#0b74ff 0%, #1057b3 100%);
+  background: linear-gradient(135deg, #0b74ff 0%, #1057b3 100%);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   color: white;
   font-size: 22px;
-  box-shadow: 0 6px 18px rgba(11,26,47,0.08);
+  box-shadow: 0 6px 18px rgba(11, 26, 47, 0.08);
 }
 
 /* Card content */
@@ -202,12 +215,14 @@
   display: flex;
   flex-direction: column;
 }
+
 .card-content h3 {
   margin: 0 0 8px 0;
   color: #0b3b66;
   font-size: 18px;
   font-weight: 700;
 }
+
 .card-content p {
   margin: 6px 0;
   font-size: 14px;
@@ -217,7 +232,11 @@
   gap: 10px;
   line-height: 1.3;
 }
-.card-content p strong { color: #22323f; font-weight:600; }
+
+.card-content p strong {
+  color: #22323f;
+  font-weight: 600;
+}
 
 /* ---------- Buttons row ---------- */
 .card-actions {
@@ -227,6 +246,7 @@
   align-items: center;
   flex-wrap: wrap;
 }
+
 .card-actions button {
   display: inline-flex;
   align-items: center;
@@ -239,20 +259,29 @@
   font-size: 14px;
   transition: transform .14s ease, box-shadow .14s ease;
 }
+
 .edit-btn {
-  background: linear-gradient(180deg,#28b46a 0%, #1f9a4f 100%);
+  background: linear-gradient(180deg, #28b46a 0%, #1f9a4f 100%);
   color: #fff;
 }
+
 .delete-btn {
-  background: linear-gradient(180deg,#ff5a5f 0%, #e04348 100%);
+  background: linear-gradient(180deg, #ff5a5f 0%, #e04348 100%);
   color: #fff;
 }
+
 .print-btn {
-  background: linear-gradient(180deg,#3aa0ff 0%, #2b86d6 100%);
+  background: linear-gradient(180deg, #3aa0ff 0%, #2b86d6 100%);
   color: #fff;
 }
-.card-actions button:hover { transform: translateY(-3px); }
-.card-actions svg { font-size: 14px; }
+
+.card-actions button:hover {
+  transform: translateY(-3px);
+}
+
+.card-actions svg {
+  font-size: 14px;
+}
 
 /* ---------- Delete popup ---------- */
 .popup-overlay {
@@ -264,6 +293,7 @@
   align-items: center;
   z-index: 1300;
 }
+
 .popup-box {
   background: #fff;
   padding: 18px;
@@ -272,6 +302,7 @@
   max-width: 420px;
   box-shadow: 0 12px 40px rgba(9, 24, 46, 0.14);
 }
+
 .popup-box h3 {
   margin: 0 0 8px 0;
   font-size: 18px;

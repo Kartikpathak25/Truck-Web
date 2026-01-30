@@ -10,13 +10,13 @@ const TankerDashboard = () => {
       <Sidebar2 />
 
       {/* Main content area */}
-     
-        {/* Nested routes render here */}
-        <div className="dashboard-content">
-  <Outlet />
-</div>
 
+      {/* Nested routes render here */}
+      <div className="dashboard-content">
+        <Outlet />
       </div>
+
+    </div>
   )
 };
 

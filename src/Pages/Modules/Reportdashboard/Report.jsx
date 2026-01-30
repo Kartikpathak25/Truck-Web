@@ -71,8 +71,8 @@ export default function Report() {
         ]);
 
         const truckData = truckSnap.docs.map(doc => ({ id: doc.id, type: "Truck Fill", ...doc.data() }));
-        const tankerData = tankerSnap.docs.map(doc => ({ id: doc.id, type: "Tanker Fill", ...doc.data() }));
-        const pumpData = pumpSnap.docs.map(doc => ({ id: doc.id, type: "Pump Fill", ...doc.data() }));
+        const tankerData = tankerSnap.docs.map(doc => ({ id: doc.id, type: "Vehicle Fill", ...doc.data() }));
+        const pumpData = pumpSnap.docs.map(doc => ({ id: doc.id, type: "Tanker Fill", ...doc.data() }));
 
         const combined = [...truckData, ...tankerData, ...pumpData];
         setAllResults(combined);

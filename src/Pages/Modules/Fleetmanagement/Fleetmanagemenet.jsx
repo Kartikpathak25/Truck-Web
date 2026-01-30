@@ -243,18 +243,18 @@ const Fleetmanagement = () => {
                 <span className="truck-model"> ({item.model})</span>
               </h3>
               <p><strong>📍 Location:</strong> {item.location}</p>
-             {/* 🔥 TANKER FIELDS */}
-{item.type === 'Tanker' && (
-  <>
-    <p><strong>🧱 Capacity:</strong> {item.capacity} L</p>
-    <p><strong>🛢 Remaining Oil:</strong> {item.remainingOil ?? 0} L</p>
-  </>
-)}
+              {/* 🔥 TANKER FIELDS */}
+              {item.type === 'Tanker' && (
+                <>
+                  <p><strong>🧱 Capacity:</strong> {item.capacity} L</p>
+                  <p><strong>🛢 Remaining Oil:</strong> {item.remainingOil ?? 0} L</p>
+                </>
+              )}
 
-{/* 🔥 VEHICLE FIELD */}
-{item.type === 'Vehicle' && (
-  <p><strong>📊 Current Reading:</strong> {item.currentReading} km</p>
-)}
+              {/* 🔥 VEHICLE FIELD */}
+              {item.type === 'Vehicle' && (
+                <p><strong>📊 Current Reading:</strong> {item.currentReading} km</p>
+              )}
 
               <p><strong>👨‍✈️ Driver:</strong> {item.driverName}</p>
               {/* 👈 NEW Ownership Field Display */}

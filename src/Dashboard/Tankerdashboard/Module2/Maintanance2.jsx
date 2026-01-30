@@ -1,4 +1,5 @@
 // src/components/Maintanance/Maintanance2.js
+import { getAuth } from "firebase/auth";
 import React, { useState, useEffect } from "react";
 import "./Maintanance2.css";
 import { useForm } from "react-hook-form";
@@ -30,9 +31,11 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 export default function Maintanance2() {
+  const auth = getAuth();
+
   const [maintenanceList, setMaintenanceList] = useState([]);
   const [showForm, setShowForm] = useState(false);
-  const [editIndex, setEditIndex] = useState(null);
+  const [editingDocId, setEditingDocId] = useState(null); // ← using doc ID instead of index
   const [searchTerm, setSearchTerm] = useState("");
   const [userVehicle, setUserVehicle] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -48,11 +51,10 @@ export default function Maintanance2() {
     formState: { errors },
   } = useForm();
 
-  // 👀 watch price & serviceCharge for auto total
   const watchPrice = watch("price");
   const watchServiceCharge = watch("serviceCharge");
 
-  // 🔥 Get logged user from LocalStorage
+  // Get logged user vehicle from localStorage
   useEffect(() => {
     const stored = localStorage.getItem("loggedUser");
     if (stored) {
@@ -67,7 +69,7 @@ export default function Maintanance2() {
     }
   }, []);
 
-  // 🔥 FETCH MAINTENANCE DATA
+  // Fetch all maintenance records
   useEffect(() => {
     const fetchMaintenance = async () => {
       try {
@@ -83,17 +85,19 @@ export default function Maintanance2() {
     fetchMaintenance();
   }, []);
 
-  // 🧮 Auto-calc totalPrice = price + serviceCharge
+  // Auto-calculate totalPrice
   useEffect(() => {
     const p = parseFloat(watchPrice || 0);
     const s = parseFloat(watchServiceCharge || 0);
     const total = p + s;
-    if (!isNaN(total)) setValue("totalPrice", Number(total.toFixed(2)));
+    if (!isNaN(total)) {
+      setValue("totalPrice", Number(total.toFixed(2)));
+    }
   }, [watchPrice, watchServiceCharge, setValue]);
 
   const openAddForm = () => {
     reset();
-    setEditIndex(null);
+    setEditingDocId(null);
 
     if (userVehicle) {
       setValue("truckNumber", userVehicle.truckNumber);
@@ -106,25 +110,42 @@ export default function Maintanance2() {
 
   const onSubmit = async (data) => {
     try {
-      if (userVehicle) {
-        data.truckNumber = userVehicle.truckNumber;
-        data.vehicleModel = userVehicle.vehicleModel;
-        data.driverName = userVehicle.driverName;
+      const user = auth.currentUser;
+      if (!user) {
+        alert("Please login first");
+        return;
       }
 
-      if (editIndex !== null) {
-        const id = maintenanceList[editIndex].id;
-        const ref = doc(db, "maintenance", id);
-        await updateDoc(ref, data);
+      const submitData = {
+        ...data,
+        userId: user.uid,
+        price: Number(data.price) || 0,
+        serviceCharge: Number(data.serviceCharge) || 0,
+        totalPrice: Number(data.totalPrice) || 0,
+        // You can add updatedAt: new Date().toISOString() if needed
+      };
 
-        const updated = [...maintenanceList];
-        updated[editIndex] = { id, ...data };
-        setMaintenanceList(updated);
-        setEditIndex(null);
+      if (editingDocId) {
+        // UPDATE
+        const docRef = doc(db, "maintenance", editingDocId);
+        await updateDoc(docRef, submitData);
+
+        setMaintenanceList((prev) =>
+          prev.map((item) =>
+            item.id === editingDocId ? { ...item, ...submitData } : item
+          )
+        );
+
+        setEditingDocId(null);
       } else {
-        const ref = await addDoc(collection(db, "maintenance"), data);
-        setMaintenanceList([...maintenanceList, { id: ref.id, ...data }]);
+        // CREATE
+        const docRef = await addDoc(collection(db, "maintenance"), submitData);
+        setMaintenanceList((prev) => [
+          ...prev,
+          { id: docRef.id, ...submitData },
+        ]);
       }
+
       reset();
       setShowForm(false);
     } catch (error) {
@@ -133,10 +154,21 @@ export default function Maintanance2() {
     }
   };
 
-  const handleEdit = (index) => {
-    const item = maintenanceList[index];
-    Object.keys(item).forEach((key) => setValue(key, item[key]));
-    setEditIndex(index);
+  const handleEdit = (item) => {
+    setEditingDocId(item.id);
+    reset();
+
+    // Populate form fields
+    setValue("truckNumber", item.truckNumber || "");
+    setValue("vehicleModel", item.vehicleModel || "");
+    setValue("driverName", item.driverName || "");
+    setValue("date", item.date || "");
+    setValue("partName", item.partName || "");
+    setValue("price", item.price || "");
+    setValue("serviceCharge", item.serviceCharge || "");
+    setValue("totalPrice", item.totalPrice || "");
+    setValue("notes", item.notes || "");
+
     setShowForm(true);
   };
 
@@ -151,7 +183,7 @@ export default function Maintanance2() {
       await deleteDoc(doc(db, "maintenance", id));
       setMaintenanceList((prev) => prev.filter((_, i) => i !== deleteIndex));
     } catch (error) {
-      console.error("Error deleting maintenance:", error);
+      console.error("Error deleting:", error);
       alert("Failed to delete record");
     } finally {
       setShowDeletePopup(false);
@@ -168,9 +200,9 @@ export default function Maintanance2() {
 
     const term = searchTerm.toLowerCase();
     return (
-      item.truckNumber?.toLowerCase().includes(term) ||
-      item.driverName?.toLowerCase().includes(term) ||
-      item.vehicleModel?.toLowerCase().includes(term)
+      (item.truckNumber || "").toLowerCase().includes(term) ||
+      (item.driverName || "").toLowerCase().includes(term) ||
+      (item.vehicleModel || "").toLowerCase().includes(term)
     );
   });
 
@@ -179,30 +211,28 @@ export default function Maintanance2() {
     const pageWidth = pdf.internal.pageSize.getWidth();
 
     pdf.setFontSize(15);
-    pdf.text("Truck Maintenance Record", pageWidth / 2, 15, {
-      align: "center",
-    });
+    pdf.text("Truck Maintenance Record", pageWidth / 2, 15, { align: "center" });
 
     autoTable(pdf, {
       startY: 25,
       head: [["Field", "Value"]],
       body: [
-        ["Truck Number", item.truckNumber],
+        ["Truck Number", item.truckNumber || "—"],
         ["Vehicle Model", item.vehicleModel || "N/A"],
-        ["Driver Name", item.driverName],
-        ["Date", item.date],
-        ["Spare Part", item.partName],
-        ["Price (₹)", item.price],
-        ["Service Charge (₹)", item.serviceCharge],
-        ["Total (₹)", item.totalPrice],
-        ["Notes", item.notes],
+        ["Driver Name", item.driverName || "—"],
+        ["Date", item.date || "—"],
+        ["Spare Part", item.partName || "—"],
+        ["Price (₹)", item.price || "0"],
+        ["Service Charge (₹)", item.serviceCharge || "0"],
+        ["Total (₹)", item.totalPrice || "0"],
+        ["Notes", item.notes || "—"],
       ],
       styles: { fontSize: 11, cellPadding: 3 },
       headStyles: { fillColor: [52, 152, 219], textColor: 255 },
       margin: { left: 10, right: 10 },
     });
 
-    pdf.save(`maintenance-${item.truckNumber}.pdf`);
+    pdf.save(`maintenance-${item.truckNumber || "record"}.pdf`);
   };
 
   if (isLoading) {
@@ -258,13 +288,11 @@ export default function Maintanance2() {
           onChange={(e) => setSearchTerm(e.target.value)}
         />
 
-        {/* ------------ FORM MODAL ------------ */}
+        {/* FORM MODAL */}
         {showForm && (
           <div className="modal-overlay">
             <div className="modal-form">
-              <h3>
-                {editIndex !== null ? "Edit Maintenance" : "Add Maintenance"}
-              </h3>
+              <h3>{editingDocId ? "Edit Maintenance" : "Add Maintenance"}</h3>
 
               <form onSubmit={handleSubmit(onSubmit)}>
                 <input
@@ -293,46 +321,46 @@ export default function Maintanance2() {
 
                 <input
                   type="date"
-                  {...register("date", { required: "Date required" })}
+                  {...register("date", { required: "Date is required" })}
                 />
-                {errors.date && (
-                  <p className="error">{errors.date.message}</p>
-                )}
+                {errors.date && <p className="error">{errors.date.message}</p>}
 
                 <input
                   type="text"
                   placeholder="Spare Part Name"
-                  {...register("partName", { required: "Part required" })}
+                  {...register("partName", { required: "Part name is required" })}
                 />
                 {errors.partName && (
                   <p className="error">{errors.partName.message}</p>
                 )}
 
-                {/* PRICE */}
                 <input
                   type="number"
+                  step="0.01"
                   placeholder="Price (₹)"
-                  {...register("price", { required: "Price required" })}
+                  {...register("price", {
+                    required: "Price is required",
+                    min: { value: 0, message: "Price cannot be negative" },
+                  })}
                 />
-                {errors.price && (
-                  <p className="error">{errors.price.message}</p>
-                )}
+                {errors.price && <p className="error">{errors.price.message}</p>}
 
-                {/* SERVICE CHARGE */}
                 <input
                   type="number"
+                  step="0.01"
                   placeholder="Service Charge (₹)"
                   {...register("serviceCharge", {
-                    required: "Service charge required",
+                    required: "Service charge is required",
+                    min: { value: 0, message: "Cannot be negative" },
                   })}
                 />
                 {errors.serviceCharge && (
                   <p className="error">{errors.serviceCharge.message}</p>
                 )}
 
-                {/* AUTO TOTAL (READ ONLY) */}
                 <input
                   type="number"
+                  step="0.01"
                   placeholder="Total (₹)"
                   {...register("totalPrice")}
                   readOnly
@@ -351,7 +379,10 @@ export default function Maintanance2() {
                   <button
                     type="button"
                     className="cancel-btn"
-                    onClick={() => setShowForm(false)}
+                    onClick={() => {
+                      setShowForm(false);
+                      setEditingDocId(null);
+                    }}
                   >
                     Cancel
                   </button>
@@ -361,7 +392,7 @@ export default function Maintanance2() {
           </div>
         )}
 
-        {/* ------------ DELETE POPUP ------------ */}
+        {/* DELETE CONFIRMATION */}
         {showDeletePopup && (
           <div className="popup-overlay">
             <div className="popup-box">
@@ -383,12 +414,11 @@ export default function Maintanance2() {
           </div>
         )}
 
-        {/* ------------ CARD LIST ------------ */}
+        {/* CARD LIST */}
         <div className="maintenance-list">
           {filteredList.length === 0 ? (
             <p style={{ textAlign: "center", color: "#999", padding: "40px" }}>
-              No maintenance records found. Click "+ Add Maintenance" to create
-              one.
+              No maintenance records found for this vehicle.
             </p>
           ) : (
             filteredList.map((item, index) => (
@@ -405,34 +435,36 @@ export default function Maintanance2() {
                   <p>
                     <strong>Vehicle Model:</strong> {item.vehicleModel || "N/A"}
                   </p>
-
                   <p>
-                    <FaUser /> <strong>Driver:</strong> {item.driverName}
+                    <FaUser /> <strong>Driver:</strong> {item.driverName || "—"}
                   </p>
                   <p>
-                    <FaCalendarAlt /> <strong>Date:</strong> {item.date}
+                    <FaCalendarAlt /> <strong>Date:</strong> {item.date || "—"}
                   </p>
                   <p>
-                    <FaTools /> <strong>Parts:</strong> {item.partName}
+                    <FaTools /> <strong>Parts:</strong> {item.partName || "—"}
                   </p>
                   <p>
-                    <FaRupeeSign /> <strong>Price:</strong> ₹{item.price}
+                    <FaRupeeSign /> <strong>Price:</strong> ₹
+                    {Number(item.price || 0).toFixed(2)}
                   </p>
                   <p>
                     <FaRupeeSign /> <strong>Service Charge:</strong> ₹
-                    {item.serviceCharge}
+                    {Number(item.serviceCharge || 0).toFixed(2)}
                   </p>
                   <p>
-                    <FaRupeeSign /> <strong>Total:</strong> ₹{item.totalPrice}
+                    <FaRupeeSign /> <strong>Total:</strong> ₹
+                    {Number(item.totalPrice || 0).toFixed(2)}
                   </p>
                   <p>
-                    <FaClipboardList /> <strong>Notes:</strong> {item.notes}
+                    <FaClipboardList /> <strong>Notes:</strong>{" "}
+                    {item.notes || "—"}
                   </p>
 
                   <div className="card-actions">
                     <button
                       className="edit-btn"
-                      onClick={() => handleEdit(index)}
+                      onClick={() => handleEdit(item)}
                     >
                       Edit
                     </button>

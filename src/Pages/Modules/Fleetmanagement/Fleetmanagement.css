@@ -166,8 +166,9 @@
 
 
 .fleet-card p.status-row .label {
-  min-width: 70px;  
-  min-height: 49px;        /* zarurat ho to 80–90 bhi kar sakte ho */
+  min-width: 70px;
+  min-height: 49px;
+  /* zarurat ho to 80–90 bhi kar sakte ho */
 }
 
 /* Status pill */
@@ -179,7 +180,8 @@
   border-radius: 999px;
   font-size: 11px;
   font-weight: 600;
-  white-space: nowrap;      /* line break completely band */
+  white-space: nowrap;
+  /* line break completely band */
 }
 
 .status.active {
@@ -270,7 +272,77 @@
   .fleet-content {
     padding: 16px;
   }
+
   .fleet-controls {
     grid-template-columns: 1fr;
+  }
+}
+
+/* 🔹 Scrollable Table Container */
+.fleet-table {
+  flex: 1;
+  overflow-y: auto;
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  padding: 1rem;
+  max-height: calc(100vh - 280px);
+  /* header + filters accounted */
+}
+
+/* 🔹 Table Styling */
+.fleet-table table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: auto;
+  position: relative;
+}
+
+.fleet-table thead th {
+  position: sticky;
+  top: 0;
+  background: #f9fafb;
+  z-index: 1;
+  padding: 1rem;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  text-transform: uppercase;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.fleet-table td {
+  padding: 1rem;
+  font-size: 14px;
+  border-bottom: 1px solid #f3f4f6;
+  white-space: nowrap;
+}
+
+.fleet-table tr:hover {
+  background: rgba(79, 70, 229, 0.05);
+  transition: background 0.3s ease;
+}
+
+/* 🔹 Row Highlight by Type */
+.fleet-table tr[data-type="Pump Fill"] {
+  background: rgba(16, 185, 129, 0.05);
+}
+
+.fleet-table tr[data-type="Tanker Fill"] {
+  background: rgba(255, 193, 7, 0.05);
+}
+
+/* 🔹 Responsive */
+@media (max-width: 900px) {
+
+  .fleet-table thead th,
+  .fleet-table td {
+    font-size: 13px;
+    padding: 0.75rem;
+  }
+
+  .fleet-table table {
+    display: block;
+    overflow-x: auto;
   }
 }

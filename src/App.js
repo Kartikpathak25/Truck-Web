@@ -7,7 +7,7 @@ import Fleetmanagement from './Pages/Modules/Fleetmanagement/Fleetmanagemenet.js
 import Oilmanagement from './Pages/Modules/Oilmanagement/Oilmanagement.jsx';
 import Cityoperation from './Pages/Modules/Cityoperation/Cityoperation.jsx';
 import TankerDashboard from './Dashboard/Tankerdashboard/TankerDashboard.jsx';
-import Maintanance from './Pages/Modules/Maintananace/Maintanance.jsx';
+import Maintanance from './Pages/Modules/Maintananace/Maintanance.jsx'
 import Oilmanagement2 from './Dashboard/Tankerdashboard/Module2/Oilmanagement2.jsx';
 import Maintanance2 from './Dashboard/Tankerdashboard/Module2/Maintanance2.jsx';
 import Report from './Pages/Modules/Reportdashboard/Report.jsx';
