@@ -78,7 +78,7 @@
 }
 
 .mobile-menu li {
-  border-bottom: 1px solid rgba(255,255,255,0.2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .mobile-menu a {
@@ -96,21 +96,48 @@
 
 /* Animation */
 @keyframes slideDown {
-  from { opacity: 0; transform: translateY(-20px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* 🔹 Responsive Breakpoints */
 @media (max-width: 768px) {
   .sidebar {
-    display: none;   /* Hide sidebar in mobile */
+    display: none;
+    /* Hide sidebar in mobile */
   }
 
   .mobile-navbar {
-    display: flex;   /* Show top navbar */
+    display: flex;
+    /* Show top navbar */
   }
 
   .mobile-menu {
-    display: block;  /* Show dropdown when open */
+    display: block;
+    /* Show dropdown when open */
   }
+}
+
+/* Make logout button look like nav-link */
+.nav-link.logout,
+button.nav-link.logout {
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.nav-link.logout:hover,
+button.nav-link.logout:hover {
+  background-color: #e74c3c;
 }

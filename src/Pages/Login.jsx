@@ -1,5 +1,5 @@
 // src/Pages/Login/Login.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth, db } from '../firebase';
@@ -7,10 +7,27 @@ import { doc, getDoc } from 'firebase/firestore';
 import './Login.css';
 
 const Login = () => {
-  const [username, setUsername] = useState('');   // email
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+
+  // Check if user is already logged in on component mount
+  useEffect(() => {
+    const loggedUser = localStorage.getItem('loggedUser');
+    if (loggedUser) {
+      try {
+        const user = JSON.parse(loggedUser);
+        if (user.role === 'Admin') {
+          navigate('/admin-dashboard', { replace: true });
+        } else if (user.role === 'Tanker' || user.role === 'User') {
+          navigate('/tanker-dashboard', { replace: true });
+        }
+      } catch (error) {
+        localStorage.removeItem('loggedUser');
+      }
+    }
+  }, [navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -57,32 +74,30 @@ const Login = () => {
         role: userData.role || '',
         assignedType: userData.assignedType || '',
         assignedId: userData.assignedId || '',
-
-        // 👇 yahi fields Maintenance2.jsx use karega
         assignedTruckNumber: vehicleData?.truckNumber || '',
         assignedTruckModel: vehicleData?.model || '',
         driverName: vehicleData?.driverName || '',
-
-        // optional extra fields (dashboard ke liye)
         capacity: vehicleData?.capacity || '',
         currentReading: vehicleData?.currentReading || '',
         location: vehicleData?.location || '',
         status: vehicleData?.status || '',
+        loginTime: new Date().toISOString(), // Add login timestamp
       };
 
       localStorage.setItem('loggedUser', JSON.stringify(mappedUser));
 
-      // 5️⃣ Role based navigation
+      // 5️⃣ Role based navigation with replace
       if (mappedUser.role === 'Admin') {
-        navigate('/admin-dashboard');
+        navigate('/admin-dashboard', { replace: true });
       } else if (mappedUser.role === 'Tanker' || mappedUser.role === 'User') {
-        navigate('/tanker-dashboard');
+        navigate('/tanker-dashboard', { replace: true });
       } else {
         alert('Role invalid! Please contact admin.');
+        localStorage.removeItem('loggedUser');
       }
     } catch (err) {
-      console.error(err);
-      alert('You Are Entered Wrong id and password : Login Failed ❌ ');
+      console.error('Login Error:', err);
+      alert('You have entered wrong ID and password: Login Failed ❌');
     } finally {
       setIsLoading(false);
     }
@@ -110,6 +125,7 @@ const Login = () => {
                 onChange={(e) => setUsername(e.target.value)}
                 required
                 disabled={isLoading}
+                autoComplete="email"
               />
             </div>
 
@@ -121,6 +137,7 @@ const Login = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={isLoading}
+                autoComplete="current-password"
               />
             </div>
 

@@ -1,62 +1,151 @@
+// src/Component/Sidebar/Sidebar.jsx
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
   FaTachometerAlt,
   FaTruck,
   FaOilCan,
   FaUsers,
   FaCity,
+  FaTools,
+  FaFileAlt,
   FaSignOutAlt,
   FaBars,
   FaTimes,
-  FaTools,   // 🔧 Icon for Maintenance
-  FaFileAlt   // 📄 Icon for Report
 } from "react-icons/fa";
 import "./Sidebar.css";
 
+const menuItems = [
+  { to: "/admin-dashboard", label: "Dashboard", icon: FaTachometerAlt },
+  { to: "/fleet", label: "Fleet Management", icon: FaTruck },
+  { to: "/oil", label: "Oil Management", icon: FaOilCan },
+  { to: "/users", label: "User Management", icon: FaUsers },
+  { to: "/city", label: "City Operation", icon: FaCity },
+  { to: "/maintenance", label: "Maintenance", icon: FaTools },
+  { to: "/maintanancereports", label: "Maintenance Report", icon: FaFileAlt },
+  { to: "/reports", label: "OIL Reports", icon: FaFileAlt },
+];
+
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const closeMenu = () => setIsOpen(false);
+
+  const handleLogout = () => {
+    // Close mobile menu
+    closeMenu();
+
+    // Clear all auth data
+    localStorage.removeItem('loggedUser');
+    sessionStorage.clear();
+
+    // Clear any Firebase auth state if needed
+    // auth.signOut(); // Uncomment if you want to sign out from Firebase too
+
+    // Navigate to login with replace and state
+    navigate('/', { replace: true, state: { loggedOut: true } });
+
+    // Prevent back button navigation
+    window.history.pushState(null, '', '/');
+    window.addEventListener('popstate', preventBack);
+  };
+
+  const preventBack = () => {
+    window.history.pushState(null, '', '/');
+  };
 
   return (
     <>
-      {/* 🔹 Mobile Navbar */}
+      {/* Mobile Hamburger */}
       <div className="mobile-navbar">
-        <button className="menu-toggle" onClick={() => setIsOpen(!isOpen)}>
+        <button
+          className="menu-toggle"
+          onClick={() => setIsOpen(!isOpen)}
+          aria-label="Toggle menu"
+        >
           {isOpen ? <FaTimes /> : <FaBars />}
         </button>
         <h2 className="mobile-title">Admin Panel</h2>
       </div>
 
-      {/* 🔹 Desktop Sidebar */}
-      <div className="sidebar">
-        <h2>Admin Panel</h2>
+      {/* Desktop Sidebar */}
+      <aside className="sidebar">
+        <div className="sidebar-header">
+          <h2>Admin Panel</h2>
+        </div>
+
+        <nav>
+          <ul>
+            {menuItems.map((item) => (
+              <li key={item.to}>
+                <NavLink
+                  to={item.to}
+                  className={({ isActive }) =>
+                    `nav-link ${isActive ? "active" : ""}`
+                  }
+                  onClick={closeMenu}
+                >
+                  <item.icon className="nav-icon" />
+                  <span>{item.label}</span>
+                </NavLink>
+              </li>
+            ))}
+
+            {/* Logout button */}
+            <li>
+              <button
+                className="nav-link logout"
+                onClick={handleLogout}
+              >
+                <FaSignOutAlt className="nav-icon" />
+                <span>Logout</span>
+              </button>
+            </li>
+          </ul>
+        </nav>
+      </aside>
+
+      {/* Mobile Slide-in Menu */}
+      <div className={`mobile-menu ${isOpen ? "open" : ""}`}>
+        <div className="mobile-menu-header">
+          <h3>Menu</h3>
+          <button onClick={closeMenu} aria-label="Close menu">
+            <FaTimes />
+          </button>
+        </div>
+
         <ul>
-          <li><Link to="/admin-dashboard"><FaTachometerAlt /> Dashboard</Link></li>
-          <li><Link to="/fleet"><FaTruck /> Fleet Management</Link></li>
-          <li><Link to="/oil"><FaOilCan /> Oil Management</Link></li>
-          <li><Link to="/users"><FaUsers /> User Management</Link></li>
-          <li><Link to="/city"><FaCity /> City Operation</Link></li>
-          <li><Link to="/maintenance"><FaTools /> Maintenance</Link></li>
-          <li><Link to="/reports"><FaFileAlt /> Reports</Link></li> {/* ✅ Added */}
-          <li><Link to="/"><FaSignOutAlt /> Logout</Link></li>
+          {menuItems.map((item) => (
+            <li key={item.to}>
+              <NavLink
+                to={item.to}
+                className={({ isActive }) =>
+                  `nav-link ${isActive ? "active" : ""}`
+                }
+                onClick={closeMenu}
+              >
+                <item.icon className="nav-icon" />
+                <span>{item.label}</span>
+              </NavLink>
+            </li>
+          ))}
+
+          {/* Logout button */}
+          <li>
+            <button
+              className="nav-link logout"
+              onClick={handleLogout}
+            >
+              <FaSignOutAlt className="nav-icon" />
+              <span>Logout</span>
+            </button>
+          </li>
         </ul>
       </div>
 
-      {/* 🔹 Mobile Dropdown Menu */}
-      {isOpen && (
-        <div className="mobile-menu">
-          <ul>
-            <li><Link to="/admin-dashboard" onClick={() => setIsOpen(false)}><FaTachometerAlt /> Dashboard</Link></li>
-            <li><Link to="/fleet" onClick={() => setIsOpen(false)}><FaTruck /> Fleet Management</Link></li>
-            <li><Link to="/oil" onClick={() => setIsOpen(false)}><FaOilCan /> Oil Management</Link></li>
-            <li><Link to="/users" onClick={() => setIsOpen(false)}><FaUsers /> User Management</Link></li>
-            <li><Link to="/city" onClick={() => setIsOpen(false)}><FaCity /> City Operation</Link></li>
-            <li><Link to="/maintenance" onClick={() => setIsOpen(false)}><FaTools /> Maintenance</Link></li>
-            <li><Link to="/reports" onClick={() => setIsOpen(false)}><FaFileAlt /> Reports</Link></li> {/* ✅ Added */}
-            <li><Link to="/" onClick={() => setIsOpen(false)}><FaSignOutAlt /> Logout</Link></li>
-          </ul>
-        </div>
-      )}
+      {/* Backdrop for mobile menu */}
+      {isOpen && <div className="backdrop" onClick={closeMenu} />}
     </>
   );
 };
