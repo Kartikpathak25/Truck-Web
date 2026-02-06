@@ -1,49 +1,178 @@
-/* Main container with Sidebar + Content */
+/* src/Dashboard/Tankerdashboard/Module2/Oilmanagement2.css */
+
 .oil-dashboard {
   display: flex;
   min-height: 100vh;
-  background: #f5f5f5;
+  background-color: #f5f6fa;
 }
 
-/* Sidebar will take fixed width, content fills the rest */
-.oil-dashboard .sidebar {
-  flex: 0 0 250px; /* adjust width as per your sidebar */
-}
-
-/* Content area */
 .oil-content {
   flex: 1;
-  padding: 20px 40px;
-  display: flex;
-  flex-direction: column;
-  align-items: center; /* center horizontally */
-  background: #f5f5f5;
+  margin-left: 220px;
+  padding: 30px;
+  background-color: #f4f6f8;
+  width: calc(100% - 220px);
+  overflow-x: auto;
 }
 
-/* Action buttons */
+.oil-header {
+  margin-bottom: 30px;
+}
+
+.oil-header h2 {
+  font-size: 28px;
+  color: #2c3e50;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+}
+
 .action-buttons {
   display: flex;
-  gap: 15px;
-  margin: 25px 0;
-  font-size: 100px;
+  gap: 20px;
+  margin-bottom: 40px;
+  flex-wrap: wrap;
 }
 
 .action-buttons button {
-  padding: 10px 18px;
-  font-size: 14px;
-  border-radius: 8px;
+  padding: 15px 30px;
+  font-size: 16px;
+  font-weight: 600;
   border: none;
+  border-radius: 12px;
   cursor: pointer;
-  transition: 0.3s;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
-.action-buttons button:hover {
-  opacity: 0.9;
+.btn-tanker {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
 }
 
-/* Center forms in content area */
-.form-wrapper {
-  width: 100%;
-  max-width: 900px; /* control form width */
-  margin-top: 20px;
+.btn-tanker:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn-truck {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+}
+
+.btn-truck:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(245, 87, 108, 0.4);
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  padding: 20px;
+}
+
+.modal-content.oil-modal {
+  background: white;
+  border-radius: 16px;
+  width: 95%;
+  max-width: 1200px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  position: relative;
+  padding: 30px;
+}
+
+.modal-close {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: #e74c3c;
+  color: white;
+  border: none;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.modal-close:hover {
+  background: #c0392b;
+  transform: rotate(90deg);
+}
+
+.records-section {
+  margin-top: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.records-card {
+  background: white;
+  padding: 25px;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.records-card h3 {
+  font-size: 20px;
+  color: #34495e;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #ecf0f1;
+}
+
+@media (max-width: 768px) {
+  .oil-content {
+    margin-left: 0;
+    width: 100%;
+    padding: 70px 15px 20px;
+  }
+
+  .oil-header h2 {
+    font-size: 22px;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .action-buttons button {
+    width: 100%;
+    padding: 12px 20px;
+  }
+
+  .modal-content.oil-modal {
+    width: 100%;
+    max-height: 85vh;
+    padding: 20px;
+  }
+
+  .records-card {
+    padding: 15px;
+  }
+}
+
+@media (max-width: 1024px) and (min-width: 769px) {
+  .oil-content {
+    margin-left: 200px;
+    width: calc(100% - 200px);
+  }
 }

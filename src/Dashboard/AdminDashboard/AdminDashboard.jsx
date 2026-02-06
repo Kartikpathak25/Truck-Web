@@ -85,7 +85,7 @@ const AdminDashboard = () => {
 
         const pumpOps = pumpSnap.docs.map((d) => ({
           id: d.id,
-          type: "Pump Fill",
+          type: "Tanker Fill",
           tankerId: d.data().tankerId || "",
           vehicleId: "-", // pump side me sirf tanker hota hai
           driverName: d.data().driverName || "",
@@ -96,7 +96,7 @@ const AdminDashboard = () => {
 
         const truckOps = truckFillSnap.docs.map((d) => ({
           id: d.id,
-          type: "Truck Fill",
+          type: "Vehicle Fill",
           tankerId: d.data().tankerId || "",
           vehicleId: d.data().vehicleId || d.data().truckId || "",
           driverName: d.data().driverName || "",
@@ -204,15 +204,14 @@ const AdminDashboard = () => {
             <FaSearch className="search-icon" />
             <input
               type="text"
-              placeholder={`Search by ${
-                filterField === "vehicleId"
+              placeholder={`Search by ${filterField === "vehicleId"
                   ? "Vehicle ID"
                   : filterField === "tankerId"
-                  ? "Tanker ID"
-                  : filterField === "driverName"
-                  ? "Driver Name"
-                  : "City"
-              }`}
+                    ? "Tanker ID"
+                    : filterField === "driverName"
+                      ? "Driver Name"
+                      : "City"
+                }`}
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
             />

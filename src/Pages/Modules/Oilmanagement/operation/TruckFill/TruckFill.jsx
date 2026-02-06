@@ -1,4 +1,6 @@
+// src/Pages/Modules/Oilmanagement/operation/TruckFill/TruckFill.jsx
 import React, { useState, useEffect } from "react";
+import { getAuth } from "firebase/auth";
 import { db } from "../../../../../firebase";
 import {
   collection,
@@ -17,7 +19,9 @@ import autoTable from "jspdf-autotable";
 import "./TruckFill.css";
 import EditTruck from "./EditTruck";
 
-export default function TruckFill({ onClose, showRecordsOnly = false }) {
+export default function TruckFill({ onClose, showRecordsOnly = false, isAdmin = false }) {
+  const auth = getAuth();
+
   const [tankerId, setTankerId] = useState("");
   const [product, setProduct] = useState("");
   const [totalPumpOil, setTotalPumpOil] = useState("");
@@ -36,22 +40,23 @@ export default function TruckFill({ onClose, showRecordsOnly = false }) {
   const [showOverfillPopup, setShowOverfillPopup] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteRecordId, setDeleteRecordId] = useState(null);
+  const [canEdit, setCanEdit] = useState(false);
 
-  // 🚀 STEP 1: LOGIN DATA + AUTO DATE
   useEffect(() => {
     const initUser = async () => {
       try {
         setIsLoading(true);
         const user = JSON.parse(localStorage.getItem("loggedUser"));
-        console.log("🔍 LOGIN DATA:", user);
         setUserData(user);
 
         const role = user.role?.toLowerCase() || user.assignedType?.toLowerCase();
         setIsTankerAccess(role.includes("tanker") || role === "admin" || user.assignedType === "Tanker");
 
+        const hasPermission = role === "admin" || isAdmin;
+        setCanEdit(hasPermission);
+
         const tankerId = user.assignedTruckNumber || user.assignedId || user.LIC;
-        console.log("🔍 TANKER ID:", tankerId);
-        
+
         if (tankerId) {
           setTankerId(tankerId);
           setDateReceived(new Date().toISOString().split('T')[0]);
@@ -63,16 +68,13 @@ export default function TruckFill({ onClose, showRecordsOnly = false }) {
       }
     };
     initUser();
-  }, []);
+  }, [isAdmin]);
 
-  // 🚀 STEP 2: AUTO FETCH TANKER DATA
   useEffect(() => {
     if (!tankerId) return;
 
     const fetchTankerFromFleet = async () => {
       try {
-        console.log("🔍 FETCHING TANKER FROM FLEET:", tankerId);
-
         const q = query(
           collection(db, "tankers"),
           where("truckNumber", "==", tankerId)
@@ -82,16 +84,11 @@ export default function TruckFill({ onClose, showRecordsOnly = false }) {
 
         if (!snapshot.empty) {
           const tanker = snapshot.docs[0].data();
-          console.log("✅ TANKER FOUND:", tanker);
 
           setTotalPumpOil(tanker.capacity || "");
           setOldOil(tanker.remainingOil || 0);
           setPumpName(tanker.location || "Pump Station");
-          setDriverName(
-            userData?.driverName ||
-            tanker.driverName ||
-            "Driver"
-          );
+          setDriverName(userData?.driverName || tanker.driverName || "Driver");
         }
       } catch (error) {
         console.error("Fleet fetch error:", error);
@@ -101,14 +98,11 @@ export default function TruckFill({ onClose, showRecordsOnly = false }) {
     fetchTankerFromFleet();
   }, [tankerId, userData]);
 
-  // 🚀 STEP 3: PUMP RECORDS
   useEffect(() => {
     if (!tankerId) return;
 
     const fetchPumpRecords = async () => {
       try {
-        console.log("🔍 FETCHING PUMP RECORDS FOR:", tankerId);
-        
         const snapshot = await getDocs(
           query(
             collection(db, "tankerFillOperationsPump"),
@@ -119,8 +113,6 @@ export default function TruckFill({ onClose, showRecordsOnly = false }) {
         const recordsData = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
         const sortedRecords = recordsData.sort((a, b) => new Date(b.dateReceived) - new Date(a.dateReceived));
         setPumpRecords(sortedRecords);
-        
-        console.log("✅ PUMP RECORDS LOADED:", sortedRecords.length);
       } catch (error) {
         console.error("Pump records error:", error);
       }
@@ -129,7 +121,6 @@ export default function TruckFill({ onClose, showRecordsOnly = false }) {
     fetchPumpRecords();
   }, [tankerId]);
 
-  // 🚀 STEP 4: AUTO CALCULATE Final Oil
   useEffect(() => {
     const old = Number(oldOil) || 0;
     const filled = Number(filledOil) || 0;
@@ -137,12 +128,11 @@ export default function TruckFill({ onClose, showRecordsOnly = false }) {
   }, [oldOil, filledOil]);
 
   const resetForm = () => {
-    setProduct(""); 
-    setFilledOil(""); 
+    setProduct("");
+    setFilledOil("");
     setFinalOil("");
   };
 
-  // 🚀 PRINT FUNCTIONS ✅ WORKING
   const printAllRecords = () => {
     if (pumpRecords.length === 0) {
       alert("❌ No records to print!");
@@ -161,7 +151,7 @@ export default function TruckFill({ onClose, showRecordsOnly = false }) {
       record.driverName || ''
     ]);
 
-    const doc = new jsPDF('l', 'mm', 'a4'); // Landscape
+    const doc = new jsPDF('l', 'mm', 'a4');
     doc.setFontSize(18);
     doc.text(`Tanker Pump Records - ${tankerId}`, 14, 20);
     doc.setFontSize(12);
@@ -174,16 +164,11 @@ export default function TruckFill({ onClose, showRecordsOnly = false }) {
       body: printData,
       theme: 'grid',
       styles: { fontSize: 8, cellPadding: 3, halign: 'center' },
-      headStyles: { 
-        fillColor: [41, 128, 185], 
-        textColor: 255, 
-        fontStyle: 'bold',
-        fontSize: 9
-      },
+      headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold', fontSize: 9 },
       columnStyles: {
-        0: { cellWidth: 20 }, // Date
-        1: { cellWidth: 25 }, // Tanker ID
-        6: { cellWidth: 15, fontStyle: 'bold' } // Final Oil
+        0: { cellWidth: 20 },
+        1: { cellWidth: 25 },
+        6: { cellWidth: 15, fontStyle: 'bold' }
       },
       margin: { left: 14, right: 14 }
     });
@@ -195,19 +180,19 @@ export default function TruckFill({ onClose, showRecordsOnly = false }) {
     const doc = new jsPDF();
     doc.setFontSize(22);
     doc.text('🛢️ Tanker Fill Record', 105, 30, { align: 'center' });
-    
+
     doc.setFontSize(14);
     doc.text(`Tanker ID: ${record.tankerId}`, 20, 60);
     doc.text(`Date: ${record.dateReceived}`, 20, 80);
     doc.text(`Product: ${record.product}`, 20, 100);
-    
+
     doc.setFontSize(16);
     doc.text(`Capacity: ${record.totalPumpOil}L`, 20, 125);
     doc.text(`Old Oil: ${record.oldOil || 0}L`, 20, 145);
     doc.text(`Filled: ${record.filledOil}L`, 20, 165);
     doc.setFontSize(18);
     doc.text(`Final Oil: ${record.finalOil}L`, 20, 190, { fontStyle: 'bold' });
-    
+
     doc.setFontSize(12);
     doc.text(`Pump: ${record.pumpName}`, 20, 215);
     doc.text(`Driver: ${record.driverName}`, 20, 230);
@@ -231,6 +216,7 @@ export default function TruckFill({ onClose, showRecordsOnly = false }) {
       setIsLoading(true);
 
       await addDoc(collection(db, "tankerFillOperationsPump"), {
+        userId: auth.currentUser.uid,
         tankerId,
         product,
         totalPumpOil: capacity,
@@ -286,11 +272,11 @@ export default function TruckFill({ onClose, showRecordsOnly = false }) {
     <div className="truck-fill">
       {!showRecordsOnly && (
         <>
-          <h3>🚚 Fill Tanker from Pump</h3>
+          <h3>⛽ Fill Tanker from Pump</h3>
 
           <div className="role-badge tanker">
-            ✅ <strong>TANKER ID:</strong> <span className="locked">{tankerId}</span> | 
-            🚛 <strong>DRIVER:</strong> 
+            ✅ <strong>TANKER ID:</strong> <span className="locked">{tankerId}</span> |
+            🚛 <strong>DRIVER:</strong>
             <span className={driverName ? "driver-found" : "driver-loading"}>
               {driverName || "Auto-searching..."}
             </span>
@@ -353,20 +339,19 @@ export default function TruckFill({ onClose, showRecordsOnly = false }) {
         </>
       )}
 
-      {/* ✅ RECORDS TABLE WITH WORKING PRINT */}
       <div className="truck-table">
         <div className="table-header">
-          <h4>⛽ Tanker Pump Records ({pumpRecords.length}) - {tankerId}</h4>
-          <button 
-            className="print-btn" 
-            onClick={printAllRecords} 
+          <h4>⛽ Tanker Pump Records ({pumpRecords.length})</h4>
+          <button
+            className="print-btn"
+            onClick={printAllRecords}
             disabled={pumpRecords.length === 0}
             title="Download PDF of all records"
           >
             🖨️ Print All
           </button>
         </div>
-        
+
         {pumpRecords.length > 0 ? (
           <table>
             <thead>
@@ -389,26 +374,26 @@ export default function TruckFill({ onClose, showRecordsOnly = false }) {
                   <td>{item.product}</td>
                   <td>{item.totalPumpOil}L</td>
                   <td>{item.oldOil || 0}L</td>
-                  <td style={{color: 'green'}}>{item.filledOil}L</td>
+                  <td style={{ color: 'green' }}>{item.filledOil}L</td>
                   <td className="remaining-oil">{item.finalOil}L</td>
                   <td>{item.pumpName}</td>
                   <td>{item.driverName}</td>
                   <td>
-                    <button 
-                      className="print-btn-small" 
+                    <button
+                      className="print-btn-small"
                       onClick={() => printSingleRecord(item)}
                       title="Print single record"
                     >
                       🖨️
                     </button>
-                    {isTankerAccess && (
+                    {(canEdit || (item.userId === auth.currentUser?.uid)) && (
                       <>
                         <button className="edit-btn" onClick={() => setEditRecord(item)}>
                           ✏️
                         </button>
-                        <button className="delete-btn" onClick={() => { 
-                          setDeleteRecordId(item.id); 
-                          setShowDeleteConfirm(true); 
+                        <button className="delete-btn" onClick={() => {
+                          setDeleteRecordId(item.id);
+                          setShowDeleteConfirm(true);
                         }}>
                           🗑️
                         </button>
@@ -424,7 +409,6 @@ export default function TruckFill({ onClose, showRecordsOnly = false }) {
         )}
       </div>
 
-      {/* EDIT MODAL */}
       {editRecord && (
         <div className="modal-overlay">
           <div className="modal-content">
@@ -440,7 +424,6 @@ export default function TruckFill({ onClose, showRecordsOnly = false }) {
         </div>
       )}
 
-      {/* POPUPS */}
       {showOverfillPopup && (
         <div className="overfill-popup">
           <div className="popup-content">

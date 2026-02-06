@@ -1,11 +1,13 @@
 // src/Pages/Modules/Oilmanagement/operation/TankerFill/EditTanker.jsx
 import React, { useEffect, useState } from "react";
+import { getAuth } from "firebase/auth";
 import { db } from "../../../../../firebase";
 import { updateDoc, doc, serverTimestamp, getDocs, collection, query, where, limit } from "firebase/firestore";
 import "./TankerFill.css";
 
 export default function EditTanker({ record, onCancel }) {
-  // ✅ Form states (new readings fields added)
+  const auth = getAuth();
+
   const [totalPumpOil, setTotalPumpOil] = useState(record.totalPumpOil ?? "");
   const [filledOil, setFilledOil] = useState(record.filledOil ?? "");
   const [remainingOil, setRemainingOil] = useState(record.remainingOil ?? "");
@@ -15,7 +17,6 @@ export default function EditTanker({ record, onCancel }) {
   const [dateTime, setDateTime] = useState(record.dateTime ?? "");
   const [driverName, setDriverName] = useState(record.driverName ?? "");
 
-  // ✅ Auto-fetch vehicle details (location + driverName) from trucks collection
   useEffect(() => {
     const fetchVehicleDetails = async () => {
       if (!record.truckId) return;
@@ -37,7 +38,6 @@ export default function EditTanker({ record, onCancel }) {
     fetchVehicleDetails();
   }, [record.truckId]);
 
-  // ✅ Auto-calc remaining oil
   useEffect(() => {
     const total = Number(totalPumpOil || 0);
     const filled = Number(filledOil || 0);
@@ -61,6 +61,7 @@ export default function EditTanker({ record, onCancel }) {
 
     try {
       await updateDoc(doc(db, "tankerFillOperations", record.id), {
+        userId: auth.currentUser.uid,
         totalPumpOil: total,
         filledOil: filled,
         remainingOil: remaining,
@@ -72,10 +73,12 @@ export default function EditTanker({ record, onCancel }) {
         updatedAt: serverTimestamp(),
       });
 
+      alert("✅ Record updated successfully!");
       onCancel();
+      window.location.reload();
     } catch (err) {
       console.error("Update failed:", err);
-      alert("Update failed: " + err.message);
+      alert("❌ Update failed: " + err.message);
     }
   };
 

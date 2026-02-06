@@ -1,49 +1,62 @@
+// src/Dashboard/Tankerdashboard/Module2/Oilmanagement2.jsx
 import React, { useState } from "react";
-import Sidebar from "../../../Component/Sidebar/Sidebar2/Sidebar2";
+import Sidebar2 from "../../../Component/Sidebar/Sidebar2/Sidebar2";
 import TankerFill from "../../../Pages/Modules/Oilmanagement/operation/TankerFill/TankerFill";
 import TruckFill from "../../../Pages/Modules/Oilmanagement/operation/TruckFill/TruckFill";
 import "./Oilmanagement2.css";
 
-
 export default function Oilmanagement2() {
   const [activeForm, setActiveForm] = useState(null);
 
+  const closeModal = () => setActiveForm(null);
+
   return (
     <div className="oil-dashboard">
-      <Sidebar />
+      <Sidebar2 />
 
       <div className="oil-content">
-        <h2>🛢️ Oil Management</h2>
+        <div className="oil-header">
+          <h2>🛢️ Oil Management</h2>
+        </div>
 
-        {/* Action Buttons */}
         <div className="action-buttons">
-          <button onClick={() => setActiveForm("tanker")}>
-            🚚  Fill Truck  
+          <button className="btn-tanker" onClick={() => setActiveForm("tanker")}>
+            🚚 Fill Truck from Tanker
           </button>
-          <button onClick={() => setActiveForm("truck")}>
-            🛢️ Fill Tanker
+          <button className="btn-truck" onClick={() => setActiveForm("truck")}>
+            ⛽ Fill Tanker from Pump
           </button>
         </div>
 
-        {/* Show Form in Modal */}
         {activeForm && (
-          <div className="modal-overlay">
-            <div className="modal-content">
-              {activeForm === "tanker" && (
-                <TankerFill onClose={() => setActiveForm(null)} />
-              )}
-             {activeForm === "truck" && (
-  <TruckFill onClose={() => setActiveForm(null)} />
-)}
+          <div className="modal-overlay" onClick={closeModal}>
+            <div
+              className="modal-content oil-modal"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button className="modal-close" onClick={closeModal}>✕</button>
 
+              {activeForm === "tanker" && (
+                <TankerFill onClose={closeModal} />
+              )}
+
+              {activeForm === "truck" && (
+                <TruckFill onClose={closeModal} />
+              )}
             </div>
           </div>
         )}
 
-        {/* Records Section */}
         <div className="records-section">
-          <TankerFill showRecordsOnly={true} />
-          <TruckFill showRecordsOnly={true} />
+          <div className="records-card">
+            <h3>📋 Tanker → Truck Fill Records</h3>
+            <TankerFill showRecordsOnly />
+          </div>
+
+          <div className="records-card">
+            <h3>📋 Pump → Tanker Fill Records</h3>
+            <TruckFill showRecordsOnly />
+          </div>
         </div>
       </div>
     </div>

@@ -1,7 +1,8 @@
+// src/Pages/Modules/Oilmanagement/Oilmanagement.jsx
 import React, { useState } from "react";
 import Sidebar from "../../../Component/Sidebar/Sidebar";
-import TankerFill from "../../../Pages/Modules/Oilmanagement/operation/TankerFill/TankerFill";
-import TruckFill from "../../../Pages/Modules/Oilmanagement/operation/TruckFill/TruckFill";
+import TankerFill from "./operation/TankerFill/TankerFill";
+import TruckFill from "./operation/TruckFill/TruckFill";
 import "./Oilmanagement.css";
 
 export default function Oilmanagement() {
@@ -14,43 +15,57 @@ export default function Oilmanagement() {
       <Sidebar />
 
       <div className="oil-content">
-        <h2>🛢️ Oil Management</h2>
+        <div className="oil-header">
+          <h2>🛢️ Oil Management - Admin Panel</h2>
+          <div className="admin-badge">
+            <span className="badge-admin">👑 Admin Access</span>
+          </div>
+        </div>
 
-        {/* Action Buttons */}
         <div className="action-buttons">
-          <button onClick={() => setActiveForm("tanker")}>
-            🚚 Fill Tanker
+          <button className="btn-tanker" onClick={() => setActiveForm("tanker")}>
+            🚚 Fill Truck from Tanker
           </button>
-          <button onClick={() => setActiveForm("truck")}>
-            🛢️ Fill Truck
+          <button className="btn-truck" onClick={() => setActiveForm("truck")}>
+            ⛽ Fill Tanker from Pump
           </button>
         </div>
 
-        {/* ================= MODAL ================= */}
         {activeForm && (
           <div className="modal-overlay" onClick={closeModal}>
             <div
-              className="modal-content"
+              className="modal-content oil-modal"
               onClick={(e) => e.stopPropagation()}
             >
+              <button className="modal-close" onClick={closeModal}>✕</button>
+
               {activeForm === "tanker" && (
-                <TankerFill onClose={closeModal} />
+                <TankerFill onClose={closeModal} isAdmin={true} />
               )}
 
               {activeForm === "truck" && (
-                <TruckFill onClose={closeModal} />
+                <TruckFill onClose={closeModal} isAdmin={true} />
               )}
             </div>
           </div>
         )}
 
-        {/* ================= RECORDS ================= */}
         <div className="records-section">
-          <h3>📋 Tanker Records</h3>
-          <TankerFill showRecordsOnly />
+          <div className="records-card">
+            <div className="card-header">
+              <h3>📋 Tanker → Truck Fill Records (All Users)</h3>
+              <span className="record-count">View & manage all records</span>
+            </div>
+            <TankerFill showRecordsOnly isAdmin={true} />
+          </div>
 
-          <h3>📋 Truck Records</h3>
-          <TruckFill showRecordsOnly />
+          <div className="records-card">
+            <div className="card-header">
+              <h3>📋 Pump → Tanker Fill Records (All Users)</h3>
+              <span className="record-count">View & manage all records</span>
+            </div>
+            <TruckFill showRecordsOnly isAdmin={true} />
+          </div>
         </div>
       </div>
     </div>
