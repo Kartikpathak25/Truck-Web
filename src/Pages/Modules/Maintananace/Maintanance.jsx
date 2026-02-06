@@ -365,67 +365,71 @@ export default function Maintanance() {
         )}
 
         {displayList.length === 0 ? (
-          <div className="empty-state">
-            <FaWrench className="empty-icon" />
-            <h3>No maintenance records found</h3>
-            <p>Click "Add Maintenance" to create your first record</p>
+          <div className="maintenance-list-container">
+            <div className="empty-state">
+              <FaWrench className="empty-icon" />
+              <h3>No maintenance records found</h3>
+              <p>Click "Add Maintenance" to create your first record</p>
+            </div>
           </div>
         ) : (
-          <div className="maintenance-list">
-            {displayList.map((item) => (
-              <div key={item.id} className="maintenance-card">
-                <div className="card-icon">
-                  <FaWrench />
-                </div>
-
-                <div className="card-content">
-                  <h3>
-                    <FaTruck /> {item.truckNumber}
-                  </h3>
-                  <p>
-                    <strong>Vehicle Model:</strong> {item.vehicleModel || "N/A"}
-                  </p>
-                  <p>
-                    <FaUser /> <strong>Driver:</strong> {item.driverName}
-                  </p>
-                  <p>
-                    <FaCalendarAlt /> <strong>Date:</strong> {item.date}
-                  </p>
-                  <p>
-                    <FaTools /> <strong>Parts:</strong> {item.partName}
-                  </p>
-                  <div className="price-breakdown">
-                    <p>
-                      <FaRupeeSign /> <strong>Price:</strong> ₹{item.price || 0}
-                    </p>
-                    <p>
-                      <strong>Service Charge:</strong> ₹{item.serviceCharge || 0}
-                    </p>
-                    <p>
-                      <strong>Total:</strong>
-                      <span className="value-pill">₹{item.totalPrice}</span>
-                    </p>
+          <div className="maintenance-list-container">
+            <div className="maintenance-list">
+              {displayList.map((item) => (
+                <div key={item.id} className="maintenance-card">
+                  <div className="card-icon">
+                    <FaWrench />
                   </div>
-                  {item.notes && (
-                    <p className="notes-text">
-                      📝 <strong>Notes:</strong> {item.notes}
-                    </p>
-                  )}
 
-                  <div className="card-actions">
-                    <button className="edit-btn" onClick={() => handleEdit(item)}>
-                      <FaEdit /> Edit
-                    </button>
-                    <button className="delete-btn" onClick={() => handleDelete(item.id)}>
-                      <FaTrash /> Delete
-                    </button>
-                    <button className="print-btn" onClick={() => handlePrintCard(item)}>
-                      <FaPrint /> Print
-                    </button>
+                  <div className="card-content">
+                    <h3>
+                      <FaTruck /> {item.truckNumber}
+                    </h3>
+                    <p>
+                      <strong>Vehicle Model:</strong> {item.vehicleModel || "N/A"}
+                    </p>
+                    <p>
+                      <FaUser /> <strong>Driver:</strong> {item.driverName}
+                    </p>
+                    <p>
+                      <FaCalendarAlt /> <strong>Date:</strong> {item.date}
+                    </p>
+                    <p>
+                      <FaTools /> <strong>Parts:</strong> {item.partName}
+                    </p>
+                    <div className="price-breakdown">
+                      <p>
+                        <FaRupeeSign /> <strong>Price:</strong> ₹{item.price || 0}
+                      </p>
+                      <p>
+                        <strong>Service Charge:</strong> ₹{item.serviceCharge || 0}
+                      </p>
+                      <p>
+                        <strong>Total:</strong>
+                        <span className="value-pill">₹{item.totalPrice}</span>
+                      </p>
+                    </div>
+                    {item.notes && (
+                      <p className="notes-text">
+                        📝 <strong>Notes:</strong> {item.notes}
+                      </p>
+                    )}
+
+                    <div className="card-actions">
+                      <button className="edit-btn" onClick={() => handleEdit(item)}>
+                        <FaEdit /> Edit
+                      </button>
+                      <button className="delete-btn" onClick={() => handleDelete(item.id)}>
+                        <FaTrash /> Delete
+                      </button>
+                      <button className="print-btn" onClick={() => handlePrintCard(item)}>
+                        <FaPrint /> Print
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
       </div>

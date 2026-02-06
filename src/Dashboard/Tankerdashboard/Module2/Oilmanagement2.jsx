@@ -48,13 +48,17 @@ export default function Oilmanagement2() {
         )}
 
         <div className="records-section">
-          <div className="records-card">
-            <h3>📋 Tanker → Truck Fill Records</h3>
+          <div className="records-card-wrapper">
+            <div className="section-header">
+              <h3>📋 Tanker → Truck Fill Records</h3>
+            </div>
             <TankerFill showRecordsOnly />
           </div>
 
-          <div className="records-card">
-            <h3>📋 Pump → Tanker Fill Records</h3>
+          <div className="records-card-wrapper">
+            <div className="section-header">
+              <h3>⛽ Pump → Tanker Fill Records</h3>
+            </div>
             <TruckFill showRecordsOnly />
           </div>
         </div>

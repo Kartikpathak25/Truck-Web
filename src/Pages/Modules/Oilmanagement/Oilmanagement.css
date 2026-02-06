@@ -12,8 +12,8 @@
   padding: 30px;
   background-color: #f4f6f8;
   width: calc(100% - 250px);
-  overflow-x: auto;
 }
+
 
 .oil-header {
   display: flex;
@@ -240,4 +240,12 @@
     margin-left: 280px;
     width: calc(100% - 280px);
   }
+}
+
+.table-scroll {
+  max-height: 400px;
+  /* adjust as needed */
+  overflow-y: auto;
+  overflow-x: auto;
+  border-radius: 12px;
 }

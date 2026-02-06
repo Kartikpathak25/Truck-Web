@@ -5,13 +5,13 @@ import { db } from "../../../../../firebase";
 import {
   collection,
   addDoc,
-  getDocs,
   serverTimestamp,
   deleteDoc,
   doc,
   query,
   where,
-  updateDoc
+  updateDoc,
+  onSnapshot
 } from "firebase/firestore";
 
 import jsPDF from "jspdf";
@@ -43,82 +43,79 @@ export default function TruckFill({ onClose, showRecordsOnly = false, isAdmin = 
   const [canEdit, setCanEdit] = useState(false);
 
   useEffect(() => {
-    const initUser = async () => {
-      try {
-        setIsLoading(true);
-        const user = JSON.parse(localStorage.getItem("loggedUser"));
-        setUserData(user);
+    const user = JSON.parse(localStorage.getItem("loggedUser"));
+    setUserData(user);
 
-        const role = user.role?.toLowerCase() || user.assignedType?.toLowerCase();
-        setIsTankerAccess(role.includes("tanker") || role === "admin" || user.assignedType === "Tanker");
+    const role = user?.role?.toLowerCase() || "";
+    const admin = role === "admin" || isAdmin;
 
-        const hasPermission = role === "admin" || isAdmin;
-        setCanEdit(hasPermission);
+    setCanEdit(admin);
+    setIsTankerAccess(true);
 
-        const tankerId = user.assignedTruckNumber || user.assignedId || user.LIC;
+    if (!admin) {
+      setTankerId(user.assignedTruckNumber || user.assignedId || "");
+    }
 
-        if (tankerId) {
-          setTankerId(tankerId);
-          setDateReceived(new Date().toISOString().split('T')[0]);
-        }
-      } catch (error) {
-        console.error("User error:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    initUser();
+    setDateReceived(new Date().toISOString().split("T")[0]);
   }, [isAdmin]);
 
-  useEffect(() => {
-    if (!tankerId) return;
 
-    const fetchTankerFromFleet = async () => {
-      try {
-        const q = query(
-          collection(db, "tankers"),
-          where("truckNumber", "==", tankerId)
-        );
 
-        const snapshot = await getDocs(q);
-
-        if (!snapshot.empty) {
-          const tanker = snapshot.docs[0].data();
-
-          setTotalPumpOil(tanker.capacity || "");
-          setOldOil(tanker.remainingOil || 0);
-          setPumpName(tanker.location || "Pump Station");
-          setDriverName(userData?.driverName || tanker.driverName || "Driver");
-        }
-      } catch (error) {
-        console.error("Fleet fetch error:", error);
-      }
-    };
-
-    fetchTankerFromFleet();
-  }, [tankerId, userData]);
 
   useEffect(() => {
     if (!tankerId) return;
 
-    const fetchPumpRecords = async () => {
-      try {
-        const snapshot = await getDocs(
-          query(
-            collection(db, "tankerFillOperationsPump"),
-            where("tankerId", "==", tankerId)
-          )
-        );
+    const q = query(
+      collection(db, "tankers"),
+      where("truckNumber", "==", tankerId)
+    );
 
-        const recordsData = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-        const sortedRecords = recordsData.sort((a, b) => new Date(b.dateReceived) - new Date(a.dateReceived));
-        setPumpRecords(sortedRecords);
-      } catch (error) {
-        console.error("Pump records error:", error);
+    const unsub = onSnapshot(q, (snapshot) => {
+      if (!snapshot.empty) {
+        const tanker = snapshot.docs[0].data();
+
+        setTotalPumpOil(tanker.capacity || 0);
+        setOldOil(tanker.remainingOil || 0);
+        setPumpName(tanker.location || "Pump Station");
+        setDriverName(tanker.driverName || "");
+      } else {
+        // reset if tankerId invalid
+        setTotalPumpOil("");
+        setOldOil("");
+        setPumpName("");
+        setDriverName("");
       }
-    };
+    });
 
-    fetchPumpRecords();
+    return () => unsub();
+  }, [tankerId]);
+
+
+  useEffect(() => {
+    if (!tankerId) {
+      setPumpRecords([]);
+      return;
+    }
+
+    const q = query(
+      collection(db, "tankerFillOperationsPump"),
+      where("tankerId", "==", tankerId)
+    );
+
+    const unsub = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(d => ({
+        id: d.id,
+        ...d.data()
+      }));
+
+      data.sort(
+        (a, b) => new Date(b.dateReceived) - new Date(a.dateReceived)
+      );
+
+      setPumpRecords(data);
+    });
+
+    return () => unsub();
   }, [tankerId]);
 
   useEffect(() => {
@@ -201,6 +198,125 @@ export default function TruckFill({ onClose, showRecordsOnly = false, isAdmin = 
     doc.save(`Record_${record.tankerId}_${record.dateReceived}.pdf`);
   };
 
+  useEffect(() => {
+    setIsLoading(true);
+
+    let q;
+
+    if (canEdit) {
+      // ADMIN → all records
+      q = query(collection(db, "tankerFillOperationsPump"));
+    } else if (tankerId) {
+      // TANKER → own tanker only
+      q = query(
+        collection(db, "tankerFillOperationsPump"),
+        where("tankerId", "==", tankerId)
+      );
+    } else {
+      setIsLoading(false);
+      return;
+    }
+
+    const unsub = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      data.sort(
+        (a, b) => new Date(b.dateReceived || 0) - new Date(a.dateReceived || 0)
+      );
+
+      setPumpRecords(data);
+      setIsLoading(false);
+    });
+
+    return () => unsub();
+  }, [tankerId, canEdit]);
+
+  //     const tankerQuery = query(
+  //       collection(db, "tankers"),
+  //       where("truckNumber", "==", tankerId)
+  //     );
+
+  //     const tankerSnap = await onSnapshot(tankerQuery);
+
+  //     if (!tankerSnap.empty) {
+  //       const tankerDoc = tankerSnap.docs[0];
+  //       await updateDoc(doc(db, "tankers", tankerDoc.id), {
+  //         remainingOil: final,
+  //       });
+  //     }
+
+  //     alert("✅ Tanker filled & pump record saved!");
+  //     resetForm();
+
+  //   } catch (error) {
+  //     console.error("Submit error:", error);
+  //     alert("❌ Save failed: " + error.message);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+
+  const onSubmitPumpFill = async (e) => {
+    e.preventDefault();
+
+    const capacity = Number(totalPumpOil);
+    const final = Number(finalOil);
+
+    if (final > capacity) {
+      setShowOverfillPopup(true);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      // ✅ Save pump record
+      await addDoc(collection(db, "tankerFillOperationsPump"), {
+        userId: auth.currentUser.uid,
+        tankerId,
+        product,
+        totalPumpOil: capacity,
+        oldOil: Number(oldOil),
+        filledOil: Number(filledOil),
+        finalOil: final,
+        pumpName,
+        driverName,
+        dateReceived,
+        createdAt: serverTimestamp(),
+      });
+
+      // ✅ Update tanker remaining oil
+      const tankerQuery = query(
+        collection(db, "tankers"),
+        where("truckNumber", "==", tankerId)
+      );
+
+      const unsub = onSnapshot(tankerQuery, async (snap) => {
+        if (!snap.empty) {
+          const tankerDoc = snap.docs[0];
+          await updateDoc(doc(db, "tankers", tankerDoc.id), {
+            remainingOil: final,
+            updatedAt: serverTimestamp(), // 🔥 REQUIRED BY YOUR RULES
+          });
+        }
+        unsub(); // stop listener immediately
+      });
+
+      alert("✅ Tanker filled & pump record saved!");
+      resetForm();
+
+    } catch (err) {
+      console.error(err);
+      alert("❌ Save failed: " + err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -215,6 +331,7 @@ export default function TruckFill({ onClose, showRecordsOnly = false, isAdmin = 
     try {
       setIsLoading(true);
 
+      // 1️⃣ Save pump fill record
       await addDoc(collection(db, "tankerFillOperationsPump"), {
         userId: auth.currentUser.uid,
         tankerId,
@@ -224,28 +341,31 @@ export default function TruckFill({ onClose, showRecordsOnly = false, isAdmin = 
         filledOil: Number(filledOil),
         finalOil: final,
         pumpName,
-        dateReceived,
         driverName,
+        dateReceived,
         createdAt: serverTimestamp(),
       });
 
+      // 2️⃣ Update tanker remaining oil (RULE SAFE)
       const tankerQuery = query(
         collection(db, "tankers"),
         where("truckNumber", "==", tankerId)
       );
 
-      const tankerSnap = await getDocs(tankerQuery);
+      const unsub = onSnapshot(tankerQuery, async (snap) => {
+        if (!snap.empty) {
+          const tankerDoc = snap.docs[0];
+          await updateDoc(doc(db, "tankers", tankerDoc.id), {
+            remainingOil: final,
+            updatedAt: serverTimestamp(), // 🔥 REQUIRED BY YOUR RULES
+          });
+        }
+        unsub(); // stop listener immediately
+      });
 
-      if (!tankerSnap.empty) {
-        const tankerDoc = tankerSnap.docs[0];
-        await updateDoc(doc(db, "tankers", tankerDoc.id), {
-          remainingOil: final,
-        });
-      }
-
-      alert("✅ Tanker filled & pump record saved!");
       resetForm();
-      setTimeout(() => window.location.reload(), 500);
+      alert("✅ Tanker filled & pump record saved!");
+
     } catch (error) {
       console.error("Submit error:", error);
       alert("❌ Save failed: " + error.message);
@@ -254,19 +374,9 @@ export default function TruckFill({ onClose, showRecordsOnly = false, isAdmin = 
     }
   };
 
-  const handleDelete = async (id) => {
-    try {
-      await deleteDoc(doc(db, "tankerFillOperationsPump", id));
-      setPumpRecords(pumpRecords.filter(r => r.id !== id));
-      alert("✅ Record deleted!");
-    } catch (error) {
-      alert("❌ Delete failed: " + error.message);
-    }
-  };
-
-  if (isLoading && showRecordsOnly) {
-    return <div className="loading-screen">🔄 Loading tanker details...</div>;
-  }
+  // if (isLoading && showRecordsOnly) {
+  //   return <div className="loading-screen">🔄 Loading tanker details...</div>;
+  // }
 
   return (
     <div className="truck-fill">
@@ -283,9 +393,20 @@ export default function TruckFill({ onClose, showRecordsOnly = false, isAdmin = 
           </div>
 
           {isTankerAccess && (
-            <form onSubmit={handleSubmit} className="truck-form">
+            <form onSubmit={handleSubmit}>
+
+
+              {/* <input type="text" value={tankerId} readOnly className="locked-field" /> */}
               <label>Tanker ID:</label>
-              <input type="text" value={tankerId} readOnly className="locked-field" />
+              <input
+                type="text"
+                value={tankerId}
+                onChange={(e) => canEdit && setTankerId(e.target.value)}
+                readOnly={!canEdit}
+                className={canEdit ? "" : "locked-field"}
+                placeholder="Enter Tanker ID"
+              />
+
 
               <div className="form-row-split">
                 <div>
@@ -444,7 +565,7 @@ export default function TruckFill({ onClose, showRecordsOnly = false, isAdmin = 
             <div className="popup-actions">
               <button className="btn-cancel" onClick={() => setShowDeleteConfirm(false)}>Cancel</button>
               <button className="btn-confirm" onClick={async () => {
-                await handleDelete(deleteRecordId);
+                // await handleDelete(deleteRecordId);
                 setShowDeleteConfirm(false);
               }}>Yes, Delete</button>
             </div>
